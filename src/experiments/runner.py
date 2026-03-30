@@ -8,10 +8,11 @@ import time
 from src.agents.tictactoe.alphabeta import choose_alphabeta_move
 from src.agents.tictactoe.default_opponent import choose_default_move
 from src.agents.tictactoe.minimax import choose_minimax_move
+from src.agents.tictactoe.q_learning import choose_q_move, train_q_learning
 from src.games.tictactoe.game import TicTacToe
 
 
-def get_agent_move(agent_name, game):
+def get_agent_move(agent_name, game, q_table=None):
     if agent_name == "Default":
         return choose_default_move(game)
 
@@ -21,10 +22,15 @@ def get_agent_move(agent_name, game):
     if agent_name == "AlphaBeta":
         return choose_alphabeta_move(game)
 
+    if agent_name == "QLearning":
+        if q_table is None:
+            raise ValueError("Q-learning agent needs a trained q_table.")
+        return choose_q_move(game, q_table)
+
     raise ValueError(f"Unknown agent: {agent_name}")
 
 
-def play_one_game(x_agent, o_agent):
+def play_one_game(x_agent, o_agent, q_table=None):
     game = TicTacToe()
     move_count = 0
     x_time = 0.0
@@ -33,7 +39,7 @@ def play_one_game(x_agent, o_agent):
     while not game.is_game_over():
         current_agent = x_agent if game.current_player == "X" else o_agent
         start_time = time.perf_counter()
-        move = get_agent_move(current_agent, game)
+        move = get_agent_move(current_agent, game, q_table=q_table)
         elapsed = time.perf_counter() - start_time
 
         if game.current_player == "X":
@@ -52,7 +58,7 @@ def play_one_game(x_agent, o_agent):
     }
 
 
-def run_matchup(x_agent, o_agent, num_games):
+def run_matchup(x_agent, o_agent, num_games, q_table=None):
     wins_x = 0
     wins_o = 0
     draws = 0
@@ -63,7 +69,7 @@ def run_matchup(x_agent, o_agent, num_games):
     print(f"Running matchup: {x_agent} vs {o_agent} ({num_games} games)")
 
     for i in range(num_games):
-        result = play_one_game(x_agent, o_agent)
+        result = play_one_game(x_agent, o_agent, q_table=q_table)
 
         total_moves += result["moves"]
         total_x_time += result["x_time"]
@@ -103,15 +109,17 @@ def run_matchup(x_agent, o_agent, num_games):
 
 def run_experiments(num_games=10):
     results = []
-    agents = ["Default", "Minimax", "AlphaBeta"]
+    agents = ["Default", "Minimax", "AlphaBeta", "QLearning"]
 
     print("Starting Tic Tac Toe experiments")
+    print("Training Q-learning agent for experiment run")
+    q_table = train_q_learning()
 
     # each agent against default opponent
     for agent in agents:
-        results.append(run_matchup(agent, "Default", num_games))
+        results.append(run_matchup(agent, "Default", num_games, q_table=q_table))
         if agent != "Default":
-            results.append(run_matchup("Default", agent, num_games))
+            results.append(run_matchup("Default", agent, num_games, q_table=q_table))
 
     # pairwise comparisons between stronger agents
     pairings = [
@@ -119,10 +127,15 @@ def run_experiments(num_games=10):
         ("AlphaBeta", "Minimax"),
         ("Minimax", "Minimax"),
         ("AlphaBeta", "AlphaBeta"),
+        ("QLearning", "Minimax"),
+        ("Minimax", "QLearning"),
+        ("QLearning", "AlphaBeta"),
+        ("AlphaBeta", "QLearning"),
+        ("QLearning", "QLearning"),
     ]
 
     for x_agent, o_agent in pairings:
-        results.append(run_matchup(x_agent, o_agent, num_games))
+        results.append(run_matchup(x_agent, o_agent, num_games, q_table=q_table))
 
     print("Finished Tic Tac Toe experiments")
 

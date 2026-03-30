@@ -6,6 +6,7 @@ Description: Text based UI to play Tic Tac Toe in the terminal
 from src.agents.tictactoe.alphabeta import choose_alphabeta_move
 from src.agents.tictactoe.default_opponent import choose_default_move
 from src.agents.tictactoe.minimax import choose_minimax_move
+from src.agents.tictactoe.q_learning import choose_q_move, train_q_learning
 from src.games.tictactoe.game import TicTacToe
 
 
@@ -147,6 +148,46 @@ def play_tictactoe_vs_alphabeta() -> None:
                 move = prompt_for_move(game)
             else:
                 move = choose_alphabeta_move(game)
+                print(f"Computer chooses square {move + 1}.")
+
+            game.make_move(move)
+            print()
+
+        print(game.render())
+        print()
+        if game.winner == "Draw":
+            print("It's a draw.")
+        elif game.winner == human:
+            print("You win.")
+        else:
+            print("Computer wins.")
+
+    except KeyboardInterrupt:
+        print("\nGame ended.")
+
+
+def play_tictactoe_vs_q_learning() -> None:
+    game = TicTacToe()
+    human = "X"
+
+    print("Training Q-learning agent...")
+    q_table = train_q_learning(episodes=5000)
+
+    print("Tic Tac Toe")
+    print("You are X.")
+    print("Computer uses Q-learning.")
+    print("Enter a number from 1 to 9 to place your mark.")
+    print("Type q to quit.\n")
+
+    try:
+        while not game.is_game_over():
+            print(game.render())
+            print()
+
+            if game.current_player == human:
+                move = prompt_for_move(game)
+            else:
+                move = choose_q_move(game, q_table)
                 print(f"Computer chooses square {move + 1}.")
 
             game.make_move(move)

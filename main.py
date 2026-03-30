@@ -12,6 +12,7 @@ from src.ui.tictactoe_text import (
     play_tictactoe,
     play_tictactoe_vs_default,
     play_tictactoe_vs_minimax,
+    play_tictactoe_vs_q_learning,
 )
 
 
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     print("3 - Play Against Minimax")
     print("4 - Play Against Alpha Beta")
     print("5 - Run Tic Tac Toe Experiments")
+    print("6 - Play Against Q-learning")
 
     choice = input("Enter choice: ").strip()
 
@@ -62,5 +64,7 @@ if __name__ == "__main__":
         play_tictactoe_vs_alphabeta()
     elif choice == "5":
         run_experiment_mode()
+    elif choice == "6":
+        play_tictactoe_vs_q_learning()
     else:
         print("Invalid choice.")
