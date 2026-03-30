@@ -3,6 +3,7 @@ Author: Priyansh Nayak
 Description: Simple default opponent for Tic Tac Toe
 """
 
+import random
 from typing import Optional
 
 from src.games.tictactoe.game import TicTacToe
@@ -32,9 +33,9 @@ def choose_default_move(game) -> int:
     if move is not None:
         return move
 
-    # simple fallback priority
-    for move in [4, 0, 2, 6, 8, 1, 3, 5, 7]:
-        if move in game.available_moves():
-            return move
+    # otherwise choose any free square at random
+    moves = game.available_moves()
+    if moves:
+        return random.choice(moves)
 
     raise ValueError("No moves left for default opponent.")
