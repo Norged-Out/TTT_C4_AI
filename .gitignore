@@ -191,6 +191,9 @@ cython_debug/
 # Windows
 desktop.ini
 
+# Experiment outputs
+*.csv
+
 # Ruff stuff:
 .ruff_cache/
 
