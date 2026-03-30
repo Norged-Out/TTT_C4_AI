@@ -9,6 +9,7 @@ import os
 from src.experiments.runner import run_experiments
 from src.ui.tictactoe_text import (
     play_tictactoe_vs_alphabeta,
+    play_tictactoe_vs_dqn,
     play_tictactoe,
     play_tictactoe_vs_default,
     play_tictactoe_vs_minimax,
@@ -43,28 +44,43 @@ def run_experiment_mode():
     print("Experiment run completed.")
 
 
+def run_opponent_menu():
+    print("Choose Opponent:")
+    print("1 - Default Opponent")
+    print("2 - Minimax")
+    print("3 - Alpha Beta")
+    print("4 - Q-learning")
+    print("5 - DQN")
+
+    choice = input("Enter choice: ").strip()
+
+    if choice == "1":
+        play_tictactoe_vs_default()
+    elif choice == "2":
+        play_tictactoe_vs_minimax()
+    elif choice == "3":
+        play_tictactoe_vs_alphabeta()
+    elif choice == "4":
+        play_tictactoe_vs_q_learning()
+    elif choice == "5":
+        play_tictactoe_vs_dqn()
+    else:
+        print("Invalid choice.")
+
+
 if __name__ == "__main__":
     print("Select Mode:")
     print("1 - Two Player Tic Tac Toe")
-    print("2 - Play Against Default Opponent")
-    print("3 - Play Against Minimax")
-    print("4 - Play Against Alpha Beta")
-    print("5 - Run Tic Tac Toe Experiments")
-    print("6 - Play Against Q-learning")
+    print("2 - Run Tic Tac Toe Experiments")
+    print("3 - Choose Opponent")
 
     choice = input("Enter choice: ").strip()
 
     if choice == "1":
         play_tictactoe()
     elif choice == "2":
-        play_tictactoe_vs_default()
-    elif choice == "3":
-        play_tictactoe_vs_minimax()
-    elif choice == "4":
-        play_tictactoe_vs_alphabeta()
-    elif choice == "5":
         run_experiment_mode()
-    elif choice == "6":
-        play_tictactoe_vs_q_learning()
+    elif choice == "3":
+        run_opponent_menu()
     else:
         print("Invalid choice.")

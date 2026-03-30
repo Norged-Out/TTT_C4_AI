@@ -5,6 +5,8 @@ Description: Tabular Q-learning agent for Tic Tac Toe
 
 import random
 
+from tqdm import tqdm
+
 from src.games.tictactoe.game import TicTacToe
 
 
@@ -24,6 +26,7 @@ def choose_q_move(game, q_table):
     best_move = None
     best_value = -999999.0
 
+    # choose the move with the highest learned Q-value
     for move in moves:
         value = get_q_value(q_table, state, move)
         if value > best_value:
@@ -39,6 +42,7 @@ def choose_q_move(game, q_table):
 def choose_epsilon_greedy_move(game, q_table, epsilon):
     moves = game.available_moves()
 
+    # exploration vs exploitation from the lecture notes
     if random.random() < epsilon:
         return random.choice(moves)
 
@@ -77,13 +81,8 @@ def train_q_learning(episodes=20000):
 
     q_table = {}
 
-    print(f"Training Q-learning for {episodes} episodes")
-    print(
-        f"alpha={alpha} | gamma={gamma} | epsilon={epsilon}"
-        f" | epsilon_decay={epsilon_decay} | min_epsilon={min_epsilon}"
-    )
-
-    for episode in range(episodes):
+    # one episode = one full game from empty board to terminal state
+    for episode in tqdm(range(episodes), desc="Q-learning", unit="episode"):
         game = TicTacToe()
         history = []
 
@@ -98,6 +97,7 @@ def train_q_learning(episodes=20000):
             next_moves = game.available_moves()
             reward = 0.0
 
+            # terminal states get the final reward immediately
             if game.is_game_over():
                 reward = reward_from_winner(game.winner, player)
 
@@ -111,12 +111,4 @@ def train_q_learning(episodes=20000):
 
         epsilon = max(min_epsilon, epsilon * epsilon_decay)
 
-        if (episode + 1) % 500 == 0 or (episode + 1) == episodes:
-            print(
-                f"  completed {episode + 1}/{episodes} episodes"
-                f" | epsilon={epsilon:.3f}"
-                f" | q_entries={len(q_table)}"
-            )
-
-    print("Finished Q-learning training")
     return q_table

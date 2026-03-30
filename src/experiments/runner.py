@@ -13,6 +13,7 @@ from src.games.tictactoe.game import TicTacToe
 
 
 def get_agent_move(agent_name, game, q_table=None):
+    # route each agent name to its move-selection function
     if agent_name == "Default":
         return choose_default_move(game)
 
@@ -36,6 +37,7 @@ def play_one_game(x_agent, o_agent, q_table=None):
     x_time = 0.0
     o_time = 0.0
 
+    # play until one side wins or the board fills up
     while not game.is_game_over():
         current_agent = x_agent if game.current_player == "X" else o_agent
         start_time = time.perf_counter()
@@ -68,6 +70,7 @@ def run_matchup(x_agent, o_agent, num_games, q_table=None):
 
     print(f"Running matchup: {x_agent} vs {o_agent} ({num_games} games)")
 
+    # repeat the same pairing many times and average the results
     for i in range(num_games):
         result = play_one_game(x_agent, o_agent, q_table=q_table)
 
@@ -115,13 +118,13 @@ def run_experiments(num_games=10):
     print("Training Q-learning agent for experiment run")
     q_table = train_q_learning()
 
-    # each agent against default opponent
+    # assignment-style baseline comparisons against the default opponent
     for agent in agents:
         results.append(run_matchup(agent, "Default", num_games, q_table=q_table))
         if agent != "Default":
             results.append(run_matchup("Default", agent, num_games, q_table=q_table))
 
-    # pairwise comparisons between stronger agents
+    # pairwise comparisons between the stronger agents
     pairings = [
         ("Minimax", "AlphaBeta"),
         ("AlphaBeta", "Minimax"),

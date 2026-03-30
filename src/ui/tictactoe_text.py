@@ -204,3 +204,45 @@ def play_tictactoe_vs_q_learning() -> None:
 
     except KeyboardInterrupt:
         print("\nGame ended.")
+
+
+def play_tictactoe_vs_dqn() -> None:
+    from src.agents.tictactoe.dqn import choose_dqn_move, train_dqn
+
+    game = TicTacToe()
+    human = "X"
+
+    print("Training DQN agent...")
+    model = train_dqn(episodes=5000)
+
+    print("Tic Tac Toe")
+    print("You are X.")
+    print("Computer uses DQN.")
+    print("Enter a number from 1 to 9 to place your mark.")
+    print("Type q to quit.\n")
+
+    try:
+        while not game.is_game_over():
+            print(game.render())
+            print()
+
+            if game.current_player == human:
+                move = prompt_for_move(game)
+            else:
+                move = choose_dqn_move(game, model)
+                print(f"Computer chooses square {move + 1}.")
+
+            game.make_move(move)
+            print()
+
+        print(game.render())
+        print()
+        if game.winner == "Draw":
+            print("It's a draw.")
+        elif game.winner == human:
+            print("You win.")
+        else:
+            print("Computer wins.")
+
+    except KeyboardInterrupt:
+        print("\nGame ended.")
