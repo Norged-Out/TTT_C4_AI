@@ -3,6 +3,7 @@ Author: Priyansh Nayak
 Description: Text based UI to play Tic Tac Toe in the terminal
 """
 
+from src.agents.tictactoe.alphabeta import choose_alphabeta_move
 from src.agents.tictactoe.default_opponent import choose_default_move
 from src.agents.tictactoe.minimax import choose_minimax_move
 from src.games.tictactoe.game import TicTacToe
@@ -109,6 +110,43 @@ def play_tictactoe_vs_minimax() -> None:
                 move = prompt_for_move(game)
             else:
                 move = choose_minimax_move(game)
+                print(f"Computer chooses square {move + 1}.")
+
+            game.make_move(move)
+            print()
+
+        print(game.render())
+        print()
+        if game.winner == "Draw":
+            print("It's a draw.")
+        elif game.winner == human:
+            print("You win.")
+        else:
+            print("Computer wins.")
+
+    except KeyboardInterrupt:
+        print("\nGame ended.")
+
+
+def play_tictactoe_vs_alphabeta() -> None:
+    game = TicTacToe()
+    human = "X"
+
+    print("Tic Tac Toe")
+    print("You are X.")
+    print("Computer uses Alpha Beta.")
+    print("Enter a number from 1 to 9 to place your mark.")
+    print("Type q to quit.\n")
+
+    try:
+        while not game.is_game_over():
+            print(game.render())
+            print()
+
+            if game.current_player == human:
+                move = prompt_for_move(game)
+            else:
+                move = choose_alphabeta_move(game)
                 print(f"Computer chooses square {move + 1}.")
 
             game.make_move(move)
