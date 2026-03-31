@@ -1,0 +1,22 @@
+Connect 4 Full-Search Benchmark
+Generated: 2026-03-31T22:18:52.965433
+Time limit per search: 600 seconds
+Maximum possible moves in standard Connect 4: 42
+
+Search: Minimax
+nodes_visited: 86013443
+terminal_states: 32668475
+max_depth_reached: 42
+timed_out: True
+elapsed_seconds: 600.0000812000362
+finished: False
+
+Search: AlphaBeta
+nodes_visited: 88645905
+terminal_states: 23726096
+max_depth_reached: 42
+prunes: 42157790
+timed_out: True
+elapsed_seconds: 600.000075100048
+finished: False
+
