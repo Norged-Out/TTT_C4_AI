@@ -5,19 +5,24 @@ Description: Alpha Beta agent for Connect 4
 
 import time
 
-from src.agents.connect4.minimax import SearchTimeout, check_timeout, clone_game, utility
+from src.agents.connect4.minimax import (
+    INF,
+    SearchTimeout,
+    build_stats,
+    check_timeout,
+    clone_game,
+    finish_stats,
+    get_state_score,
+    visit_state,
+)
 
 
 def max_value_ab(game, ai_player, alpha, beta, stats, depth):
-    # MAX-VALUE(state) with alpha-beta pruning
     check_timeout(stats)
-    stats["nodes_visited"] += 1
-    if depth > stats["max_depth_reached"]:
-        stats["max_depth_reached"] = depth
-
-    if game.winner is not None:
-        stats["terminal_states"] += 1
-        return utility(game.winner, ai_player)
+    visit_state(stats, depth)
+    score = get_state_score(game, ai_player, stats, depth)
+    if score is not None:
+        return score
 
     best_score = -999
 
@@ -40,15 +45,11 @@ def max_value_ab(game, ai_player, alpha, beta, stats, depth):
 
 
 def min_value_ab(game, ai_player, alpha, beta, stats, depth):
-    # MIN-VALUE(state) with alpha-beta pruning
     check_timeout(stats)
-    stats["nodes_visited"] += 1
-    if depth > stats["max_depth_reached"]:
-        stats["max_depth_reached"] = depth
-
-    if game.winner is not None:
-        stats["terminal_states"] += 1
-        return utility(game.winner, ai_player)
+    visit_state(stats, depth)
+    score = get_state_score(game, ai_player, stats, depth)
+    if score is not None:
+        return score
 
     best_score = 999
 
@@ -71,7 +72,6 @@ def min_value_ab(game, ai_player, alpha, beta, stats, depth):
 
 
 def choose_alphabeta_move(game, time_limit=None):
-    # ALPHA-BETA-SEARCH(state)
     if game.winner is not None:
         raise ValueError("Cannot run alpha beta on a finished game.")
 
@@ -80,15 +80,8 @@ def choose_alphabeta_move(game, time_limit=None):
     best_score = -999
     alpha = -999
     beta = 999
-    stats = {
-        "nodes_visited": 0,
-        "terminal_states": 0,
-        "max_depth_reached": 0,
-        "prunes": 0,
-        "timed_out": False,
-        "elapsed_seconds": 0.0,
-        "deadline": None if time_limit is None else time.perf_counter() + time_limit,
-    }
+    stats = build_stats(time_limit=time_limit)
+    stats["prunes"] = 0
 
     start = time.perf_counter()
 
@@ -112,8 +105,105 @@ def choose_alphabeta_move(game, time_limit=None):
         stats.pop("deadline", None)
         raise SearchTimeout(stats)
 
-    stats["chosen_move"] = best_move
-    stats["chosen_score"] = best_score
-    stats["elapsed_seconds"] = time.perf_counter() - start
-    stats.pop("deadline", None)
+    finish_stats(stats, start, best_move, best_score)
+    return best_move, stats
+
+
+def max_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit):
+    check_timeout(stats)
+    visit_state(stats, depth)
+    score = get_state_score(game, ai_player, stats, depth, depth_limit)
+    if score is not None:
+        return score
+
+    best_score = -INF
+
+    for move in game.available_moves():
+        next_game = clone_game(game)
+        next_game.make_move(move)
+        score = min_value_ab_limited(next_game, ai_player, alpha, beta, stats, depth + 1, depth_limit)
+
+        if score > best_score:
+            best_score = score
+
+        if best_score > alpha:
+            alpha = best_score
+
+        if alpha >= beta:
+            stats["prunes"] += 1
+            break
+
+    return best_score
+
+
+def min_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit):
+    check_timeout(stats)
+    visit_state(stats, depth)
+    score = get_state_score(game, ai_player, stats, depth, depth_limit)
+    if score is not None:
+        return score
+
+    best_score = INF
+
+    for move in game.available_moves():
+        next_game = clone_game(game)
+        next_game.make_move(move)
+        score = max_value_ab_limited(next_game, ai_player, alpha, beta, stats, depth + 1, depth_limit)
+
+        if score < best_score:
+            best_score = score
+
+        if best_score < beta:
+            beta = best_score
+
+        if alpha >= beta:
+            stats["prunes"] += 1
+            break
+
+    return best_score
+
+
+def choose_alphabeta_move_limited(game, depth_limit=5, time_limit=None):
+    if game.winner is not None:
+        raise ValueError("Cannot run alpha beta on a finished game.")
+
+    ai_player = game.current_player
+    best_move = None
+    best_score = -INF
+    alpha = -INF
+    beta = INF
+    stats = build_stats(time_limit=time_limit, depth_limit=depth_limit)
+    stats["prunes"] = 0
+
+    start = time.perf_counter()
+
+    try:
+        for move in game.available_moves():
+            next_game = clone_game(game)
+            next_game.make_move(move)
+            score = min_value_ab_limited(
+                next_game,
+                ai_player,
+                alpha,
+                beta,
+                stats,
+                depth=1,
+                depth_limit=depth_limit,
+            )
+
+            if score > best_score:
+                best_score = score
+                best_move = move
+
+            if best_score > alpha:
+                alpha = best_score
+    except SearchTimeout:
+        stats["timed_out"] = True
+
+    if best_move is None:
+        stats["elapsed_seconds"] = time.perf_counter() - start
+        stats.pop("deadline", None)
+        raise SearchTimeout(stats)
+
+    finish_stats(stats, start, best_move, best_score)
     return best_move, stats

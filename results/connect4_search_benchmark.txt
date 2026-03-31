@@ -1,5 +1,4 @@
 Connect 4 Full-Search Benchmark
-Generated: 2026-03-31T22:18:52.965433
 Time limit per search: 600 seconds
 Maximum possible moves in standard Connect 4: 42
 

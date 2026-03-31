@@ -3,7 +3,9 @@ Author: Priyansh Nayak
 Description: Pygame UI to play Connect 4
 """
 
+from src.agents.connect4.alphabeta import choose_alphabeta_move_limited
 from src.agents.connect4.default_opponent import choose_default_move
+from src.agents.connect4.minimax import choose_minimax_move_limited
 from src.games.connect4.game import Connect4
 
 
@@ -15,6 +17,7 @@ MODES = [
     "Q-learning",
     "DQN",
 ]
+SEARCH_DEPTH = 5
 
 
 def reset_game(state):
@@ -51,6 +54,21 @@ def get_hover_column(mouse_pos, board_rect):
         return None
 
     return int((mx - x0) // cell_size)
+
+
+def get_ai_move(state):
+    mode = state["mode"]
+
+    if mode == "Default":
+        return choose_default_move(state["game"]), None
+
+    if mode == "Minimax":
+        return choose_minimax_move_limited(state["game"], depth_limit=SEARCH_DEPTH)
+
+    if mode == "Alpha Beta":
+        return choose_alphabeta_move_limited(state["game"], depth_limit=SEARCH_DEPTH)
+
+    return None, None
 
 
 def draw_board(screen, pygame, board_rect, game, hover_col):
@@ -208,7 +226,7 @@ def run_game():
                             reset_game(state)
                             break
 
-                        if key not in {"Two Player", "Default"}:
+                        if key in {"Q-learning", "DQN"}:
                             state["status"] = f"{key} not added yet."
                             break
 
@@ -238,10 +256,14 @@ def run_game():
                 if state["game"].winner is not None:
                     handle_game_end(state)
 
-        if state["mode"] == "Default" and state["game"].winner is None and state["game"].current_player == "O":
-            move = choose_default_move(state["game"])
-            if state["game"].make_move(move):
-                state["status"] = f"Default played column {move + 1}."
+        if state["mode"] != "Two Player" and state["game"].winner is None and state["game"].current_player == "O":
+            move, stats = get_ai_move(state)
+            if move is None:
+                state["status"] = f"{state['mode']} not added yet."
+            elif state["game"].make_move(move):
+                state["status"] = f"{state['mode']} played column {move + 1}."
+                if stats is not None:
+                    state["status"] += f" ({stats['elapsed_seconds']:.2f}s)"
                 if state["game"].winner is not None:
                     handle_game_end(state)
 

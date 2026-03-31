@@ -6,8 +6,6 @@ Description: Entry point for Tic Tac Toe and Connect 4 project
 import csv
 import os
 
-from src.experiments.runner import run_experiments
-
 
 def write_results(filename, results):
     os.makedirs("results", exist_ok=True)
@@ -32,6 +30,7 @@ def write_results(filename, results):
 
 def run_experiment_mode():
     try:
+        from src.experiments.tictactoe_runner import run_experiments
         results = run_experiments(num_games=50)
     except ModuleNotFoundError as e:
         print(f"Missing dependency: {e}")
@@ -39,6 +38,13 @@ def run_experiment_mode():
 
     write_results("tictactoe_results.csv", results)
     print("Experiment run completed.")
+
+
+def run_connect4_experiment_mode():
+    from src.experiments.connect4_runner import run_experiments
+    results = run_experiments(num_games=10)
+    write_results("connect4_results.csv", results)
+    print("Connect 4 experiment run completed.")
 
 
 def generate_saved_models():
@@ -83,6 +89,7 @@ if __name__ == "__main__":
     print("2 - Run Tic Tac Toe Experiments")
     print("3 - Generate Saved RL Models")
     print("4 - Run Connect 4 Pygame")
+    print("5 - Run Connect 4 Experiments")
 
     choice = input("Enter choice: ").strip()
 
@@ -94,5 +101,7 @@ if __name__ == "__main__":
         generate_saved_models()
     elif choice == "4":
         run_connect4_pygame_mode()
+    elif choice == "5":
+        run_connect4_experiment_mode()
     else:
         print("Invalid choice.")
