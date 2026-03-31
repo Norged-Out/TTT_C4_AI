@@ -3,6 +3,7 @@ Author: Priyansh Nayak
 Description: Simple DQN agent for Tic Tac Toe
 """
 
+import os
 import random
 from collections import deque
 
@@ -12,6 +13,9 @@ import torch.optim as optim
 from tqdm import tqdm
 
 from src.games.tictactoe.game import TicTacToe
+
+
+DQN_MODEL_PATH = os.path.join("models", "tictactoe_dqn.pt")
 
 
 class DQNNet(nn.Module):
@@ -90,7 +94,7 @@ def reward_from_winner(winner, player):
     return -1.0
 
 
-def train_dqn(episodes=5000):
+def train_dqn(episodes=5000, progress_callback=None, model_path=DQN_MODEL_PATH, force_retrain=False):
     gamma = 0.9
     epsilon = 0.3
     epsilon_decay = 0.9995
@@ -99,6 +103,12 @@ def train_dqn(episodes=5000):
     replay_size = 10000
 
     model = DQNNet()
+
+    if os.path.exists(model_path) and not force_retrain:
+        model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        model.eval()
+        return model
+
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.MSELoss()
     replay = deque(maxlen=replay_size)
@@ -161,6 +171,12 @@ def train_dqn(episodes=5000):
                 optimizer.step()
 
         epsilon = max(min_epsilon, epsilon * epsilon_decay)
+
+        if progress_callback is not None:
+            progress_callback(episode + 1, episodes)
+
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    torch.save(model.state_dict(), model_path)
 
     model.eval()
     return model

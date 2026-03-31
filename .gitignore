@@ -193,6 +193,7 @@ desktop.ini
 
 # Experiment outputs
 *.csv
+models/
 
 # Ruff stuff:
 .ruff_cache/

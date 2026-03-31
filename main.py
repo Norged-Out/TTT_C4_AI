@@ -39,9 +39,36 @@ def write_results(filename, results):
 
 
 def run_experiment_mode():
-    results = run_experiments(num_games=50)
+    try:
+        results = run_experiments(num_games=50)
+    except ModuleNotFoundError as e:
+        print(f"Missing dependency: {e}")
+        print("Use the Python interpreter that has torch installed for DQN experiments.")
+        return
+
     write_results("tictactoe_results.csv", results)
     print("Experiment run completed.")
+
+
+def generate_saved_models():
+    try:
+        from src.agents.tictactoe.q_learning import Q_TABLE_PATH, train_q_learning
+        from src.agents.tictactoe.dqn import DQN_MODEL_PATH, train_dqn
+    except ModuleNotFoundError as e:
+        print(f"Missing dependency: {e}")
+        print("Use the Python interpreter that has the needed ML packages installed.")
+        return
+
+    print("Generating Tic Tac Toe saved models")
+    print("Training Q-learning for 20000 episodes")
+    train_q_learning(episodes=20000, force_retrain=True)
+    print(f"Saved Q-learning table to {Q_TABLE_PATH}")
+
+    print("Training DQN for 20000 episodes")
+    train_dqn(episodes=20000, force_retrain=True)
+    print(f"Saved DQN model to {DQN_MODEL_PATH}")
+
+    print("Model generation completed.")
 
 
 def run_opponent_menu():
@@ -68,11 +95,21 @@ def run_opponent_menu():
         print("Invalid choice.")
 
 
+def run_pygame_mode():
+    try:
+        from src.ui.my_game import run_game
+        run_game()
+    except ModuleNotFoundError as e:
+        print(f"Missing dependency: {e}")
+
+
 if __name__ == "__main__":
     print("Select Mode:")
     print("1 - Two Player Tic Tac Toe")
     print("2 - Run Tic Tac Toe Experiments")
     print("3 - Choose Opponent")
+    print("4 - Run Pygame UI")
+    print("5 - Generate Saved RL Models")
 
     choice = input("Enter choice: ").strip()
 
@@ -82,5 +119,9 @@ if __name__ == "__main__":
         run_experiment_mode()
     elif choice == "3":
         run_opponent_menu()
+    elif choice == "4":
+        run_pygame_mode()
+    elif choice == "5":
+        generate_saved_models()
     else:
         print("Invalid choice.")

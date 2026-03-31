@@ -7,12 +7,13 @@ import time
 
 from src.agents.tictactoe.alphabeta import choose_alphabeta_move
 from src.agents.tictactoe.default_opponent import choose_default_move
+from src.agents.tictactoe.dqn import choose_dqn_move, train_dqn
 from src.agents.tictactoe.minimax import choose_minimax_move
 from src.agents.tictactoe.q_learning import choose_q_move, train_q_learning
 from src.games.tictactoe.game import TicTacToe
 
 
-def get_agent_move(agent_name, game, q_table=None):
+def get_agent_move(agent_name, game, q_table=None, dqn_model=None):
     # route each agent name to its move-selection function
     if agent_name == "Default":
         return choose_default_move(game)
@@ -28,10 +29,15 @@ def get_agent_move(agent_name, game, q_table=None):
             raise ValueError("Q-learning agent needs a trained q_table.")
         return choose_q_move(game, q_table)
 
+    if agent_name == "DQN":
+        if dqn_model is None:
+            raise ValueError("DQN agent needs a trained model.")
+        return choose_dqn_move(game, dqn_model)
+
     raise ValueError(f"Unknown agent: {agent_name}")
 
 
-def play_one_game(x_agent, o_agent, q_table=None):
+def play_one_game(x_agent, o_agent, q_table=None, dqn_model=None):
     game = TicTacToe()
     move_count = 0
     x_time = 0.0
@@ -41,7 +47,7 @@ def play_one_game(x_agent, o_agent, q_table=None):
     while not game.is_game_over():
         current_agent = x_agent if game.current_player == "X" else o_agent
         start_time = time.perf_counter()
-        move = get_agent_move(current_agent, game, q_table=q_table)
+        move = get_agent_move(current_agent, game, q_table=q_table, dqn_model=dqn_model)
         elapsed = time.perf_counter() - start_time
 
         if game.current_player == "X":
@@ -60,7 +66,7 @@ def play_one_game(x_agent, o_agent, q_table=None):
     }
 
 
-def run_matchup(x_agent, o_agent, num_games, q_table=None):
+def run_matchup(x_agent, o_agent, num_games, q_table=None, dqn_model=None):
     wins_x = 0
     wins_o = 0
     draws = 0
@@ -72,7 +78,7 @@ def run_matchup(x_agent, o_agent, num_games, q_table=None):
 
     # repeat the same pairing many times and average the results
     for i in range(num_games):
-        result = play_one_game(x_agent, o_agent, q_table=q_table)
+        result = play_one_game(x_agent, o_agent, q_table=q_table, dqn_model=dqn_model)
 
         total_moves += result["moves"]
         total_x_time += result["x_time"]
@@ -112,17 +118,19 @@ def run_matchup(x_agent, o_agent, num_games, q_table=None):
 
 def run_experiments(num_games=10):
     results = []
-    agents = ["Default", "Minimax", "AlphaBeta", "QLearning"]
+    agents = ["Default", "Minimax", "AlphaBeta", "QLearning", "DQN"]
 
     print("Starting Tic Tac Toe experiments")
     print("Training Q-learning agent for experiment run")
     q_table = train_q_learning()
+    print("Training DQN agent for experiment run")
+    dqn_model = train_dqn()
 
     # assignment-style baseline comparisons against the default opponent
     for agent in agents:
-        results.append(run_matchup(agent, "Default", num_games, q_table=q_table))
+        results.append(run_matchup(agent, "Default", num_games, q_table=q_table, dqn_model=dqn_model))
         if agent != "Default":
-            results.append(run_matchup("Default", agent, num_games, q_table=q_table))
+            results.append(run_matchup("Default", agent, num_games, q_table=q_table, dqn_model=dqn_model))
 
     # pairwise comparisons between the stronger agents
     pairings = [
@@ -135,10 +143,17 @@ def run_experiments(num_games=10):
         ("QLearning", "AlphaBeta"),
         ("AlphaBeta", "QLearning"),
         ("QLearning", "QLearning"),
+        ("DQN", "Minimax"),
+        ("Minimax", "DQN"),
+        ("DQN", "AlphaBeta"),
+        ("AlphaBeta", "DQN"),
+        ("DQN", "QLearning"),
+        ("QLearning", "DQN"),
+        ("DQN", "DQN"),
     ]
 
     for x_agent, o_agent in pairings:
-        results.append(run_matchup(x_agent, o_agent, num_games, q_table=q_table))
+        results.append(run_matchup(x_agent, o_agent, num_games, q_table=q_table, dqn_model=dqn_model))
 
     print("Finished Tic Tac Toe experiments")
 

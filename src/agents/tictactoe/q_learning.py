@@ -3,11 +3,16 @@ Author: Priyansh Nayak
 Description: Tabular Q-learning agent for Tic Tac Toe
 """
 
+import os
+import pickle
 import random
 
 from tqdm import tqdm
 
 from src.games.tictactoe.game import TicTacToe
+
+
+Q_TABLE_PATH = os.path.join("models", "tictactoe_q_table.pkl")
 
 
 def get_state_key(game):
@@ -72,7 +77,11 @@ def update_q_value(q_table, state, action, reward, next_state, next_moves, alpha
     q_table[(state, action)] = new_value
 
 
-def train_q_learning(episodes=20000):
+def train_q_learning(episodes=20000, progress_callback=None, model_path=Q_TABLE_PATH, force_retrain=False):
+    if os.path.exists(model_path) and not force_retrain:
+        with open(model_path, "rb") as f:
+            return pickle.load(f)
+
     alpha = 0.1
     gamma = 0.9
     epsilon = 0.3
@@ -110,5 +119,12 @@ def train_q_learning(episodes=20000):
             update_q_value(q_table, state, action, reward, None, [], alpha, gamma)
 
         epsilon = max(min_epsilon, epsilon * epsilon_decay)
+
+        if progress_callback is not None:
+            progress_callback(episode + 1, episodes)
+
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    with open(model_path, "wb") as f:
+        pickle.dump(q_table, f)
 
     return q_table
