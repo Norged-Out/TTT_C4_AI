@@ -27,6 +27,7 @@ class TicTacToe:
         self.winner = None
 
     def available_moves(self) -> list[int]:
+        # legal moves are the empty squares
         return [index for index, value in enumerate(self.board) if value == " "]
 
     def make_move(self, position: int) -> bool:
@@ -63,6 +64,7 @@ class TicTacToe:
         return self.winner is not None
 
     def render(self) -> str:
+        # show square numbers for empty cells to help text input
         cells = [
             str(index + 1) if value == " " else value
             for index, value in enumerate(self.board)

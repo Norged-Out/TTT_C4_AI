@@ -52,8 +52,9 @@ def handle_game_end(state):
 
     if winner == "Draw":
         state["winner_text"] = "Draw"
-    else:
-        state["winner_text"] = f"{winner} wins"
+        return
+
+    state["winner_text"] = f"{winner} wins"
 
 
 def get_board_layout(board_rect):
@@ -157,6 +158,10 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, button_rects):
             (200, 200, 120),
         )
         screen.blit(progress_text, (sidebar_rect.left + 20, y))
+        y += 28
+
+    hint = fonts["small"].render("Press R to reset.", True, (190, 190, 190))
+    screen.blit(hint, (sidebar_rect.left + 20, y))
 
     for key, rect in button_rects.items():
         if key == state["mode"]:
@@ -190,6 +195,7 @@ def ensure_agent_ready(state, render_callback, pygame):
         state["status"] = "Q-learning ready."
         state["train_progress"] = None
         render_callback()
+        return
 
     if state["mode"] == "DQN" and state["dqn_model"] is None:
         from src.agents.tictactoe.dqn import train_dqn
@@ -277,33 +283,49 @@ def run_game():
                     if rect.collidepoint(mouse_pos):
                         if key == "Reset":
                             reset_game(state)
-                        else:
-                            state["mode"] = key
-                            reset_game(state)
-                            state["status"] = f"{key} selected."
-                            ensure_agent_ready(state, render_frame, pygame)
+                            break
+
+                        state["mode"] = key
+                        reset_game(state)
+                        state["status"] = f"{key} selected."
+                        ensure_agent_ready(state, render_frame, pygame)
                         break
                 else:
-                    # board click
-                    if state["game"].winner is None:
-                        if state["mode"] == "Two Player" or state["game"].current_player == "X":
-                            cell = get_clicked_cell(mouse_pos, board_rect)
-                            if cell is not None and state["game"].make_move(cell):
-                                state["status"] = "Move played."
+                    if state["game"].winner is not None:
+                        continue
 
-                                if state["game"].winner is not None:
-                                    handle_game_end(state)
+                    if state["mode"] != "Two Player" and state["game"].current_player != "X":
+                        continue
+
+                    cell = get_clicked_cell(mouse_pos, board_rect)
+                    if cell is None:
+                        continue
+
+                    if not state["game"].make_move(cell):
+                        continue
+
+                    state["status"] = "Move played."
+                    if state["game"].winner is not None:
+                        handle_game_end(state)
 
         # AI turn in one-player modes
-        if state["mode"] != "Two Player" and state["game"].winner is None:
-            if state["game"].current_player == "O":
-                ensure_agent_ready(state, render_frame, pygame)
-                move = get_ai_move(state["game"], state["mode"], state)
-                state["game"].make_move(move)
-                state["status"] = f"{state['mode']} played square {move + 1}."
+        if state["mode"] == "Two Player" or state["game"].winner is not None:
+            render_frame()
+            clock.tick(60)
+            continue
 
-                if state["game"].winner is not None:
-                    handle_game_end(state)
+        if state["game"].current_player != "O":
+            render_frame()
+            clock.tick(60)
+            continue
+
+        ensure_agent_ready(state, render_frame, pygame)
+        move = get_ai_move(state["game"], state["mode"], state)
+        state["game"].make_move(move)
+        state["status"] = f"{state['mode']} played square {move + 1}."
+
+        if state["game"].winner is not None:
+            handle_game_end(state)
 
         render_frame()
         clock.tick(60)
