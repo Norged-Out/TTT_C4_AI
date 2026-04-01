@@ -7,11 +7,13 @@ import time
 
 from src.agents.connect4.alphabeta import choose_alphabeta_move_limited
 from src.agents.connect4.default_opponent import choose_default_move
+from src.agents.connect4.dqn import choose_dqn_move, train_dqn
 from src.agents.connect4.minimax import choose_minimax_move_limited
+from src.agents.connect4.q_learning import choose_q_move, train_q_learning
 from src.games.connect4.game import Connect4
 
 
-def get_agent_move(agent_name, game):
+def get_agent_move(agent_name, game, q_table=None, dqn_model=None):
     if agent_name == "Default":
         return choose_default_move(game), None
 
@@ -21,10 +23,20 @@ def get_agent_move(agent_name, game):
     if agent_name == "AlphaBeta":
         return choose_alphabeta_move_limited(game, depth_limit=5)
 
+    if agent_name == "QLearning":
+        if q_table is None:
+            raise ValueError("Q-learning agent needs a trained q_table.")
+        return choose_q_move(game, q_table), None
+
+    if agent_name == "DQN":
+        if dqn_model is None:
+            raise ValueError("DQN agent needs a trained model.")
+        return choose_dqn_move(game, dqn_model), None
+
     raise ValueError(f"Unknown agent: {agent_name}")
 
 
-def play_one_game(x_agent, o_agent):
+def play_one_game(x_agent, o_agent, q_table=None, dqn_model=None):
     game = Connect4()
     move_count = 0
     x_time = 0.0
@@ -35,7 +47,7 @@ def play_one_game(x_agent, o_agent):
     while not game.is_game_over():
         current_agent = x_agent if game.current_player == "X" else o_agent
         start_time = time.perf_counter()
-        move, stats = get_agent_move(current_agent, game)
+        move, stats = get_agent_move(current_agent, game, q_table=q_table, dqn_model=dqn_model)
         elapsed = time.perf_counter() - start_time
 
         if game.current_player == "X":
@@ -60,7 +72,7 @@ def play_one_game(x_agent, o_agent):
     }
 
 
-def run_matchup(x_agent, o_agent, num_games):
+def run_matchup(x_agent, o_agent, num_games, q_table=None, dqn_model=None):
     wins_x = 0
     wins_o = 0
     draws = 0
@@ -73,7 +85,7 @@ def run_matchup(x_agent, o_agent, num_games):
     print(f"Running Connect 4 matchup: {x_agent} vs {o_agent} ({num_games} games)")
 
     for i in range(num_games):
-        result = play_one_game(x_agent, o_agent)
+        result = play_one_game(x_agent, o_agent, q_table=q_table, dqn_model=dqn_model)
 
         total_moves += result["moves"]
         total_x_time += result["x_time"]
@@ -117,24 +129,40 @@ def run_matchup(x_agent, o_agent, num_games):
 
 def run_experiments(num_games=10):
     results = []
-    agents = ["Default", "Minimax", "AlphaBeta"]
+    agents = ["Default", "Minimax", "AlphaBeta", "QLearning", "DQN"]
 
     print("Starting Connect 4 experiments")
+    print("Loading Connect 4 Q-learning agent")
+    q_table = train_q_learning()
+    print("Loading Connect 4 DQN agent")
+    dqn_model = train_dqn()
 
     for agent in agents:
-        results.append(run_matchup(agent, "Default", num_games))
+        results.append(run_matchup(agent, "Default", num_games, q_table=q_table, dqn_model=dqn_model))
         if agent != "Default":
-            results.append(run_matchup("Default", agent, num_games))
+            results.append(run_matchup("Default", agent, num_games, q_table=q_table, dqn_model=dqn_model))
 
     pairings = [
         ("Minimax", "AlphaBeta"),
         ("AlphaBeta", "Minimax"),
         ("Minimax", "Minimax"),
         ("AlphaBeta", "AlphaBeta"),
+        ("QLearning", "Minimax"),
+        ("Minimax", "QLearning"),
+        ("QLearning", "AlphaBeta"),
+        ("AlphaBeta", "QLearning"),
+        ("QLearning", "QLearning"),
+        ("DQN", "Minimax"),
+        ("Minimax", "DQN"),
+        ("DQN", "AlphaBeta"),
+        ("AlphaBeta", "DQN"),
+        ("DQN", "QLearning"),
+        ("QLearning", "DQN"),
+        ("DQN", "DQN"),
     ]
 
     for x_agent, o_agent in pairings:
-        results.append(run_matchup(x_agent, o_agent, num_games))
+        results.append(run_matchup(x_agent, o_agent, num_games, q_table=q_table, dqn_model=dqn_model))
 
     print("Finished Connect 4 experiments")
     return results

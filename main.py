@@ -28,7 +28,7 @@ def write_results(filename, results):
     print(f"Wrote {filepath}")
 
 
-def run_experiment_mode():
+def run_tictactoe_experiment_mode():
     try:
         from src.experiments.tictactoe_runner import run_experiments
         results = run_experiments(num_games=50)
@@ -47,7 +47,7 @@ def run_connect4_experiment_mode():
     print("Connect 4 experiment run completed.")
 
 
-def generate_saved_models():
+def generate_tictactoe_models():
     try:
         from src.agents.tictactoe.q_learning import Q_TABLE_PATH, train_q_learning
         from src.agents.tictactoe.dqn import DQN_MODEL_PATH, train_dqn
@@ -67,7 +67,27 @@ def generate_saved_models():
     print("Model generation completed.")
 
 
-def run_pygame_mode():
+def generate_connect4_q_model():
+    from src.agents.connect4.q_learning import Q_TABLE_PATH, train_q_learning
+
+    print("Generating Connect 4 Q-learning model")
+    print("Training Q-learning for 20000 episodes")
+    train_q_learning(episodes=20000, force_retrain=True)
+    print(f"Saved Q-learning table to {Q_TABLE_PATH}")
+    print("Model generation completed.")
+
+
+def generate_connect4_dqn_model():
+    from src.agents.connect4.dqn import DQN_MODEL_PATH, train_dqn
+
+    print("Generating Connect 4 DQN model")
+    print("Training DQN for 20000 episodes")
+    train_dqn(episodes=20000, force_retrain=True)
+    print(f"Saved DQN model to {DQN_MODEL_PATH}")
+    print("Model generation completed.")
+
+
+def run_tictactoe_pygame_mode():
     try:
         from src.ui.tictactoe import run_game
         run_game()
@@ -86,22 +106,28 @@ def run_connect4_pygame_mode():
 if __name__ == "__main__":
     print("Select Mode:")
     print("1 - Run Tic Tac Toe Pygame")
-    print("2 - Run Tic Tac Toe Experiments")
-    print("3 - Generate Saved RL Models")
-    print("4 - Run Connect 4 Pygame")
-    print("5 - Run Connect 4 Experiments")
+    print("2 - Run Connect 4 Pygame")
+    print("3 - Run Tic Tac Toe Experiments")
+    print("4 - Run Connect 4 Experiments")
+    print("5 - Generate Tic Tac Toe RL Models")
+    print("6 - Generate Connect 4 Q-learning Model")
+    print("7 - Generate Connect 4 DQN Model")
 
     choice = input("Enter choice: ").strip()
 
     if choice == "1":
-        run_pygame_mode()
+        run_tictactoe_pygame_mode()
     elif choice == "2":
-        run_experiment_mode()
-    elif choice == "3":
-        generate_saved_models()
-    elif choice == "4":
         run_connect4_pygame_mode()
-    elif choice == "5":
+    elif choice == "3":
+        run_tictactoe_experiment_mode()
+    elif choice == "4":
         run_connect4_experiment_mode()
+    elif choice == "5":
+        generate_tictactoe_models()
+    elif choice == "6":
+        generate_connect4_q_model()
+    elif choice == "7":
+        generate_connect4_dqn_model()
     else:
         print("Invalid choice.")

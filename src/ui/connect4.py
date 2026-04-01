@@ -3,9 +3,6 @@ Author: Priyansh Nayak
 Description: Pygame UI to play Connect 4
 """
 
-from src.agents.connect4.alphabeta import choose_alphabeta_move_limited
-from src.agents.connect4.default_opponent import choose_default_move
-from src.agents.connect4.minimax import choose_minimax_move_limited
 from src.games.connect4.game import Connect4
 
 
@@ -60,15 +57,59 @@ def get_ai_move(state):
     mode = state["mode"]
 
     if mode == "Default":
+        from src.agents.connect4.default_opponent import choose_default_move
         return choose_default_move(state["game"]), None
 
     if mode == "Minimax":
+        from src.agents.connect4.minimax import choose_minimax_move_limited
         return choose_minimax_move_limited(state["game"], depth_limit=SEARCH_DEPTH)
 
     if mode == "Alpha Beta":
+        from src.agents.connect4.alphabeta import choose_alphabeta_move_limited
         return choose_alphabeta_move_limited(state["game"], depth_limit=SEARCH_DEPTH)
 
+    if mode == "Q-learning":
+        from src.agents.connect4.q_learning import choose_q_move, train_q_learning
+        if state["q_table"] is None:
+            state["status"] = "Loading Q-learning agent..."
+            state["q_table"] = train_q_learning()
+        return choose_q_move(state["game"], state["q_table"]), None
+
+    if mode == "DQN":
+        from src.agents.connect4.dqn import choose_dqn_move, train_dqn
+        if state["dqn_model"] is None:
+            state["status"] = "Loading DQN agent..."
+            state["dqn_model"] = train_dqn()
+        return choose_dqn_move(state["game"], state["dqn_model"]), None
+
     return None, None
+
+
+def prepare_mode(state, mode):
+    if mode == "Q-learning":
+        from src.agents.connect4.q_learning import train_q_learning
+
+        if state["q_table"] is not None:
+            state["status"] = "Q-learning loaded."
+            return
+
+        state["status"] = "Loading Q-learning agent..."
+        state["q_table"] = train_q_learning()
+        state["status"] = "Q-learning ready."
+        return
+
+    if mode != "DQN":
+        return
+
+    from src.agents.connect4.dqn import train_dqn
+
+    if state["dqn_model"] is not None:
+        state["status"] = "DQN loaded."
+        return
+
+    state["status"] = "Loading DQN agent..."
+    state["dqn_model"] = train_dqn()
+    state["status"] = "DQN ready."
 
 
 def draw_board(screen, pygame, board_rect, game, hover_col):
@@ -174,6 +215,8 @@ def run_game():
         "winner_text": "",
         "status": "Ready.",
         "hover_col": None,
+        "q_table": None,
+        "dqn_model": None,
     }
 
     screen_w = 1100
@@ -226,13 +269,10 @@ def run_game():
                             reset_game(state)
                             break
 
-                        if key in {"Q-learning", "DQN"}:
-                            state["status"] = f"{key} not added yet."
-                            break
-
                         state["mode"] = key
                         reset_game(state)
                         state["status"] = f"{key} selected."
+                        prepare_mode(state, key)
                         break
 
                 if handled:
