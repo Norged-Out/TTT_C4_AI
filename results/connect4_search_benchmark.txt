@@ -19,3 +19,78 @@ timed_out: True
 elapsed_seconds: 600.000075100048
 finished: False
 
+Connect 4 Depth-Limited Benchmark
+Depth limit: 5
+Maximum possible moves in standard Connect 4: 42
+
+Search: Minimax
+chosen_move: 3
+nodes_visited: 19607
+terminal_states: 0
+cutoff_states: 16807
+max_depth_reached: 5
+timed_out: False
+elapsed_seconds: 0.6394494999549352
+finished: True
+
+Search: AlphaBeta
+chosen_move: 3
+nodes_visited: 3025
+terminal_states: 0
+cutoff_states: 2286
+max_depth_reached: 5
+prunes: 493
+timed_out: False
+elapsed_seconds: 0.08793089998653159
+finished: True
+
+Connect 4 Depth-Limited Benchmark
+Depth limit: 6
+Maximum possible moves in standard Connect 4: 42
+
+Search: Minimax
+chosen_move: 3
+nodes_visited: 137256
+terminal_states: 0
+cutoff_states: 117649
+max_depth_reached: 6
+timed_out: False
+elapsed_seconds: 4.628588099963963
+finished: True
+
+Search: AlphaBeta
+chosen_move: 3
+nodes_visited: 9812
+terminal_states: 0
+cutoff_states: 7005
+max_depth_reached: 6
+prunes: 2094
+timed_out: False
+elapsed_seconds: 0.2847960999934003
+finished: True
+
+Connect 4 Depth-Limited Benchmark
+Depth limit: 10
+Time limit per search: 60 seconds
+Maximum possible moves in standard Connect 4: 42
+
+Search: Minimax
+nodes_visited: 1750911
+terminal_states: 24774
+cutoff_states: 1475280
+max_depth_reached: 10
+timed_out: True
+elapsed_seconds: 60.000026700028684
+finished: False
+
+Search: AlphaBeta
+chosen_move: 3
+nodes_visited: 1990724
+terminal_states: 39563
+cutoff_states: 1400952
+max_depth_reached: 10
+prunes: 421112
+timed_out: True
+elapsed_seconds: 60.00003029999789
+finished: False
+
