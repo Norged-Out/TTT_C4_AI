@@ -88,7 +88,7 @@ def draw_board(screen, pygame, board_rect, game, fonts):
     x0, y0, cell_size = get_board_layout(board_rect)
     total_size = cell_size * 3
 
-    # outer board boundary
+    # outer border
     pygame.draw.rect(screen, grid, (x0, y0, total_size, total_size), 4)
 
     # grid lines
@@ -108,7 +108,7 @@ def draw_board(screen, pygame, board_rect, game, fonts):
             4,
         )
 
-    # marks
+    # draw marks or helper numbers
     for index, value in enumerate(game.board):
         row = index // 3
         col = index % 3
@@ -185,6 +185,7 @@ def ensure_agent_ready(state, render_callback, pygame):
         state["train_progress"] = None
         render_callback()
 
+        # show progress while the table trains
         def progress(done, total):
             state["train_progress"] = int((done / total) * 100)
             state["status"] = f"Training Q-learning... {state['train_progress']}%"
@@ -204,6 +205,7 @@ def ensure_agent_ready(state, render_callback, pygame):
         state["train_progress"] = None
         render_callback()
 
+        # show progress while the model trains
         def progress(done, total):
             state["train_progress"] = int((done / total) * 100)
             state["status"] = f"Training DQN... {state['train_progress']}%"
@@ -278,7 +280,7 @@ def run_game():
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
 
-                # sidebar buttons
+                # first check sidebar buttons
                 for key, rect in button_rects.items():
                     if rect.collidepoint(mouse_pos):
                         if key == "Reset":
@@ -308,7 +310,7 @@ def run_game():
                     if state["game"].winner is not None:
                         handle_game_end(state)
 
-        # AI turn in one-player modes
+        # AI only plays as O in one-player modes
         if state["mode"] == "Two Player" or state["game"].winner is not None:
             render_frame()
             clock.tick(60)

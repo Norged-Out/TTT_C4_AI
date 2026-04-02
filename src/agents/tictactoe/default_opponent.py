@@ -22,18 +22,18 @@ def find_winning_move(game, player) -> Optional[int]:
 
 
 def choose_default_move(game) -> int:
-    # try to win
+    # win if possible
     move = find_winning_move(game, game.current_player)
     if move is not None:
         return move
 
-    # try to block
+    # otherwise block
     other = "O" if game.current_player == "X" else "X"
     move = find_winning_move(game, other)
     if move is not None:
         return move
 
-    # otherwise choose any free square at random
+    # fallback move
     moves = game.available_moves()
     if moves:
         return random.choice(moves)

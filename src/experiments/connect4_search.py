@@ -9,9 +9,11 @@ from src.games.connect4.game import Connect4
 
 
 def run_search(search_name, time_limit=None, depth_limit=None):
+    # run one search from the empty board
     game = Connect4()
 
     try:
+        # choose the right search function
         if search_name == "Minimax":
             if depth_limit is None:
                 move, stats = choose_minimax_move(game, time_limit=time_limit)
@@ -32,6 +34,7 @@ def run_search(search_name, time_limit=None, depth_limit=None):
         return stats
 
     except SearchTimeout as e:
+        # timed runs return partial stats
         if e.args:
             stats = e.args[0]
         else:
@@ -44,14 +47,18 @@ def run_search(search_name, time_limit=None, depth_limit=None):
 
 
 def run_connect4_search_benchmark(time_limit=30):
+    # full search benchmark
     results = []
+
     for search_name in ["Minimax", "AlphaBeta"]:
         results.append(run_search(search_name, time_limit))
     return results
 
 
 def run_connect4_limited_benchmark(depth_limit=5, time_limit=None):
+    # depth-limited benchmark
     results = []
+
     for search_name in ["Minimax", "AlphaBeta"]:
         results.append(run_search(search_name, time_limit=time_limit, depth_limit=depth_limit))
     return results

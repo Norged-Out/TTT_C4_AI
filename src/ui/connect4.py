@@ -125,7 +125,7 @@ def draw_board(screen, pygame, board_rect, game, hover_col):
     x0, y0, cell_size = get_board_layout(board_rect)
     total_w = cell_size * Connect4.COLS
 
-    # top click area
+    # top row shows where a token will drop
     top_rect = pygame.Rect(x0, y0, total_w, cell_size)
     pygame.draw.rect(screen, (235, 235, 235), top_rect)
     pygame.draw.rect(screen, grid, top_rect, 3)
@@ -136,12 +136,12 @@ def draw_board(screen, pygame, board_rect, game, hover_col):
         color = x_color if game.current_player == "X" else o_color
         pygame.draw.circle(screen, color, (cx, cy), int(cell_size * 0.34))
 
-    # main blue board
+    # main board body
     board_surface = pygame.Rect(x0, y0 + cell_size, total_w, cell_size * Connect4.ROWS)
     pygame.draw.rect(screen, board_blue, board_surface, border_radius=12)
     pygame.draw.rect(screen, grid, board_surface, 4, border_radius=12)
 
-    # board slots
+    # draw the board cells
     for row in range(Connect4.ROWS):
         for col in range(Connect4.COLS):
             cx = x0 + col * cell_size + cell_size // 2
@@ -262,6 +262,8 @@ def run_game():
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 handled = False
+
+                # first check sidebar buttons
                 for key, rect in button_rects.items():
                     if rect.collidepoint(event.pos):
                         handled = True
@@ -296,6 +298,7 @@ def run_game():
                 if state["game"].winner is not None:
                     handle_game_end(state)
 
+        # AI only plays as O in one-player modes
         if state["mode"] != "Two Player" and state["game"].winner is None and state["game"].current_player == "O":
             move, stats = get_ai_move(state)
             if move is None:

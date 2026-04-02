@@ -16,6 +16,7 @@ INF = 10**9
 
 
 def clone_game(game):
+    # search works on copies of the current game
     copy = Connect4()
     copy.board = [row[:] for row in game.board]
     copy.current_player = game.current_player
@@ -25,7 +26,7 @@ def clone_game(game):
 
 
 def utility(winner, ai_player):
-    # utility(state)
+    # final score from the AI point of view
     if winner == ai_player:
         return 1
 
@@ -36,6 +37,7 @@ def utility(winner, ai_player):
 
 
 def score_window(window, ai_player):
+    # score one group of 4 cells
     other = "O" if ai_player == "X" else "X"
 
     ai_count = window.count(ai_player)
@@ -61,34 +63,34 @@ def score_window(window, ai_player):
 
 
 def evaluate_board(game, ai_player):
-    # heuristic evaluation for depth-limited search
+    # simple board score for depth-limited search
     board = game.board
     score = 0
 
-    # center column is usually stronger in Connect 4
+    # center control matters a lot in Connect 4
     center_col = Connect4.COLS // 2
     center_values = [board[row][center_col] for row in range(Connect4.ROWS)]
     score += center_values.count(ai_player) * 6
 
-    # horizontal windows
+    # horizontal groups of 4
     for row in range(Connect4.ROWS):
         for col in range(Connect4.COLS - 3):
             window = [board[row][col + i] for i in range(4)]
             score += score_window(window, ai_player)
 
-    # vertical windows
+    # vertical groups of 4
     for row in range(Connect4.ROWS - 3):
         for col in range(Connect4.COLS):
             window = [board[row + i][col] for i in range(4)]
             score += score_window(window, ai_player)
 
-    # diagonal down-right windows
+    # diagonal groups of 4
     for row in range(Connect4.ROWS - 3):
         for col in range(Connect4.COLS - 3):
             window = [board[row + i][col + i] for i in range(4)]
             score += score_window(window, ai_player)
 
-    # diagonal down-left windows
+    # other diagonal groups of 4
     for row in range(Connect4.ROWS - 3):
         for col in range(3, Connect4.COLS):
             window = [board[row + i][col - i] for i in range(4)]
@@ -98,6 +100,7 @@ def evaluate_board(game, ai_player):
 
 
 def check_timeout(stats):
+    # stop if the time limit is over
     if stats["deadline"] is None:
         return
 
@@ -106,12 +109,14 @@ def check_timeout(stats):
 
 
 def visit_state(stats, depth):
+    # keep track of search work
     stats["nodes_visited"] += 1
     if depth > stats["max_depth_reached"]:
         stats["max_depth_reached"] = depth
 
 
 def build_stats(time_limit=None, depth_limit=None):
+    # shared search stats block
     return {
         "nodes_visited": 0,
         "terminal_states": 0,
@@ -125,6 +130,7 @@ def build_stats(time_limit=None, depth_limit=None):
 
 
 def finish_stats(stats, start_time, best_move, best_score):
+    # final values for reporting
     stats["chosen_move"] = best_move
     stats["chosen_score"] = best_score
     stats["elapsed_seconds"] = time.perf_counter() - start_time
@@ -135,6 +141,7 @@ def finish_stats(stats, start_time, best_move, best_score):
 
 
 def get_state_score(game, ai_player, stats, depth, depth_limit=None):
+    # stop on terminal states or depth cutoffs
     if game.winner is not None:
         stats["terminal_states"] += 1
         return utility(game.winner, ai_player)
@@ -147,6 +154,7 @@ def get_state_score(game, ai_player, stats, depth, depth_limit=None):
 
 
 def max_value_limited(game, ai_player, stats, depth, depth_limit):
+    # AI turn for the limited search
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth, depth_limit)
@@ -155,6 +163,7 @@ def max_value_limited(game, ai_player, stats, depth, depth_limit):
 
     best_score = -INF
 
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -167,6 +176,7 @@ def max_value_limited(game, ai_player, stats, depth, depth_limit):
 
 
 def min_value_limited(game, ai_player, stats, depth, depth_limit):
+    # opponent turn for the limited search
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth, depth_limit)
@@ -175,6 +185,7 @@ def min_value_limited(game, ai_player, stats, depth, depth_limit):
 
     best_score = INF
 
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -187,6 +198,7 @@ def min_value_limited(game, ai_player, stats, depth, depth_limit):
 
 
 def max_value(game, ai_player, stats, depth):
+    # AI turn for the full search
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth)
@@ -194,6 +206,8 @@ def max_value(game, ai_player, stats, depth):
         return score
 
     best_score = -999
+
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -206,6 +220,7 @@ def max_value(game, ai_player, stats, depth):
 
 
 def min_value(game, ai_player, stats, depth):
+    # opponent turn for the full search
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth)
@@ -213,6 +228,8 @@ def min_value(game, ai_player, stats, depth):
         return score
 
     best_score = 999
+
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -225,6 +242,7 @@ def min_value(game, ai_player, stats, depth):
 
 
 def choose_minimax_move(game, time_limit=None):
+    # full search from the current state
     if game.winner is not None:
         raise ValueError("Cannot run minimax on a finished game.")
 
@@ -235,6 +253,7 @@ def choose_minimax_move(game, time_limit=None):
 
     start = time.perf_counter()
 
+    # root loop over all legal moves
     try:
         for move in game.available_moves():
             next_game = clone_game(game)
@@ -257,6 +276,7 @@ def choose_minimax_move(game, time_limit=None):
 
 
 def choose_minimax_move_limited(game, depth_limit=5, time_limit=None):
+    # practical depth-limited version
     if game.winner is not None:
         raise ValueError("Cannot run minimax on a finished game.")
 
@@ -267,6 +287,7 @@ def choose_minimax_move_limited(game, depth_limit=5, time_limit=None):
 
     start = time.perf_counter()
 
+    # root loop over all legal moves
     try:
         for move in game.available_moves():
             next_game = clone_game(game)

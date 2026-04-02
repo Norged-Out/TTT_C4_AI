@@ -12,14 +12,14 @@ class Connect4:
         self.reset()
 
     def reset(self) -> None:
-        # board is stored row-major, top to bottom
+        # empty board, X starts
         self.board = [[" " for _ in range(self.COLS)] for _ in range(self.ROWS)]
         self.current_player = "X"
         self.winner = None
         self.last_move = None
 
     def available_moves(self) -> list[int]:
-        # a column is playable if its top cell is still empty
+        # a column is open if the top cell is empty
         moves = []
         for col in range(self.COLS):
             if self.board[0][col] == " ":
@@ -27,15 +27,15 @@ class Connect4:
         return moves
 
     def make_move(self, col: int) -> bool:
-        # reject moves after game ends
+        # no moves after game ends
         if self.winner is not None:
             return False
 
-        # reject invalid or full columns
+        # reject bad or full columns
         if col < 0 or col >= self.COLS or col not in self.available_moves():
             return False
 
-        # token falls to the lowest empty row in the chosen column
+        # token drops to the lowest open row
         row = self.get_drop_row(col)
         if row is None:
             return False
@@ -50,14 +50,14 @@ class Connect4:
         return True
 
     def get_drop_row(self, col: int):
-        # search upward from the bottom because tokens fall down
+        # search upward from the bottom
         for row in range(self.ROWS - 1, -1, -1):
             if self.board[row][col] == " ":
                 return row
         return None
 
     def count_in_direction(self, row: int, col: int, dr: int, dc: int) -> int:
-        # count matching tokens starting just beyond the placed token
+        # count matching pieces in one direction
         player = self.board[row][col]
         count = 0
 
@@ -72,7 +72,7 @@ class Connect4:
         return count
 
     def check_winner(self, row: int, col: int):
-        # check the 4 line directions that matter in Connect 4
+        # the 4 useful directions in Connect 4
         directions = [
             (0, 1),
             (1, 0),

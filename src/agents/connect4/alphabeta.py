@@ -18,6 +18,7 @@ from src.agents.connect4.minimax import (
 
 
 def max_value_ab(game, ai_player, alpha, beta, stats, depth):
+    # AI turn with pruning
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth)
@@ -26,6 +27,7 @@ def max_value_ab(game, ai_player, alpha, beta, stats, depth):
 
     best_score = -999
 
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -45,6 +47,7 @@ def max_value_ab(game, ai_player, alpha, beta, stats, depth):
 
 
 def min_value_ab(game, ai_player, alpha, beta, stats, depth):
+    # opponent turn with pruning
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth)
@@ -53,6 +56,7 @@ def min_value_ab(game, ai_player, alpha, beta, stats, depth):
 
     best_score = 999
 
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -72,6 +76,7 @@ def min_value_ab(game, ai_player, alpha, beta, stats, depth):
 
 
 def choose_alphabeta_move(game, time_limit=None):
+    # full alpha-beta search
     if game.winner is not None:
         raise ValueError("Cannot run alpha beta on a finished game.")
 
@@ -85,6 +90,7 @@ def choose_alphabeta_move(game, time_limit=None):
 
     start = time.perf_counter()
 
+    # root loop over all legal moves
     try:
         for move in game.available_moves():
             next_game = clone_game(game)
@@ -110,6 +116,7 @@ def choose_alphabeta_move(game, time_limit=None):
 
 
 def max_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit):
+    # AI turn for the limited version
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth, depth_limit)
@@ -118,6 +125,7 @@ def max_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit
 
     best_score = -INF
 
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -137,6 +145,7 @@ def max_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit
 
 
 def min_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit):
+    # opponent turn for the limited version
     check_timeout(stats)
     visit_state(stats, depth)
     score = get_state_score(game, ai_player, stats, depth, depth_limit)
@@ -145,6 +154,7 @@ def min_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit
 
     best_score = INF
 
+    # try every legal move
     for move in game.available_moves():
         next_game = clone_game(game)
         next_game.make_move(move)
@@ -164,6 +174,7 @@ def min_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit
 
 
 def choose_alphabeta_move_limited(game, depth_limit=5, time_limit=None):
+    # practical alpha-beta version
     if game.winner is not None:
         raise ValueError("Cannot run alpha beta on a finished game.")
 
@@ -177,6 +188,7 @@ def choose_alphabeta_move_limited(game, depth_limit=5, time_limit=None):
 
     start = time.perf_counter()
 
+    # root loop over all legal moves
     try:
         for move in game.available_moves():
             next_game = clone_game(game)

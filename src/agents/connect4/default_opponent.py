@@ -3,6 +3,8 @@ Author: Priyansh Nayak
 Description: Simple default opponent for Connect 4
 """
 
+import random
+
 from src.games.connect4.game import Connect4
 
 
@@ -25,20 +27,16 @@ def find_winning_move(game, player):
 
 
 def choose_default_move(game):
-    # try to win immediately
+    # win if possible
     move = find_winning_move(game, game.current_player)
     if move is not None:
         return move
 
-    # otherwise block the opponent's immediate win
+    # otherwise block
     other = "O" if game.current_player == "X" else "X"
     move = find_winning_move(game, other)
     if move is not None:
         return move
 
-    # simple fallback: prefer the center columns first
-    for col in [3, 2, 4, 1, 5, 0, 6]:
-        if col in game.available_moves():
-            return col
-
-    raise ValueError("No moves left for default opponent.")
+    # random fallback keeps this weaker
+    return random.choice(game.available_moves())
