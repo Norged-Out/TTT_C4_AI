@@ -117,21 +117,22 @@ def train_dqn(
 
     # training setup
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.SmoothL1Loss()
     replay = deque(maxlen=replay_size)
     recent_results = deque(maxlen=500)
     training_rows = []
-    phase_split = int(episodes * 0.8)
+    # phase_split = int(episodes * 0.8)
     update_steps = 0
 
-    if phase_split <= 0:
-        phase_split = episodes
+    # if phase_split <= 0:
+    #     phase_split = episodes
 
     for episode in tqdm(range(episodes), desc="Connect4 DQN", unit="episode"):
         # alternate which side the learner plays
         game = Connect4()
         dqn_player = "X" if episode % 2 == 0 else "O"
-        opponent_type = "random" if episode < phase_split else "default"
+        opponent_type = "random"
+        # opponent_type = "random" if episode < phase_split else "default"
 
         while not game.is_game_over():
             if game.current_player != dqn_player:
