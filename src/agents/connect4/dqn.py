@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from src.experiments.training_log import write_training_log
 from src.games.connect4.game import Connect4
-from src.agents.connect4.q_learning import choose_random_move, reward_from_winner
+from src.agents.connect4.q_learning import choose_training_opponent_move, reward_from_winner
 
 
 DQN_MODEL_PATH = os.path.join("models", "connect4_dqn.pt")
@@ -89,7 +89,7 @@ def choose_epsilon_greedy_move(game, model, epsilon):
 
 
 def train_dqn(
-    episodes=20000,
+    episodes=50000,
     progress_callback=None,
     model_path=DQN_MODEL_PATH,
     force_retrain=False,
@@ -117,16 +117,21 @@ def train_dqn(
     replay = deque(maxlen=replay_size)
     recent_results = deque(maxlen=500)
     training_rows = []
+    phase_split = int(episodes * 0.8)
+
+    if phase_split <= 0:
+        phase_split = episodes
 
     for episode in tqdm(range(episodes), desc="Connect4 DQN", unit="episode"):
         # alternate which side the learner plays
         game = Connect4()
         dqn_player = "X" if episode % 2 == 0 else "O"
+        opponent_type = "random" if episode < phase_split else "default"
 
         while not game.is_game_over():
             if game.current_player != dqn_player:
-                # random opponent turn
-                game.make_move(choose_random_move(game))
+                # let the chosen training opponent play
+                game.make_move(choose_training_opponent_move(game, opponent_type))
                 continue
 
             # state before the move
@@ -178,7 +183,7 @@ def train_dqn(
                     next_best.append(best_value)
 
                 next_best_tensor = torch.tensor(next_best, dtype=torch.float32)
-                targets = rewards - gamma * next_best_tensor * (1.0 - dones)
+                targets = rewards + gamma * next_best_tensor * (1.0 - dones)
 
             # normal gradient step
             loss = loss_fn(chosen_q, targets)
@@ -197,8 +202,9 @@ def train_dqn(
             training_rows.append({
                 "episode": episode + 1,
                 "epsilon": epsilon,
+                "opponent": opponent_type,
                 "agent_win_rate": sum(1 for winner, player, _ in recent_results if winner == player) / total_recent,
-                "random_win_rate": sum(1 for winner, player, _ in recent_results if winner not in {player, "Draw"}) / total_recent,
+                "opponent_win_rate": sum(1 for winner, player, _ in recent_results if winner not in {player, "Draw"}) / total_recent,
                 "draw_rate": sum(1 for winner, _, _ in recent_results if winner == "Draw") / total_recent,
                 "avg_reward": sum(reward for _, _, reward in recent_results) / total_recent,
             })

@@ -23,6 +23,18 @@ def choose_random_move(game):
     return random.choice(game.available_moves())
 
 
+def choose_training_opponent_move(game, opponent_type):
+    # pick the training opponent for this phase
+    if opponent_type == "random":
+        return choose_random_move(game)
+
+    if opponent_type == "default":
+        from src.agents.connect4.default_opponent import choose_default_move
+        return choose_default_move(game)
+
+    raise ValueError(f"Unknown training opponent: {opponent_type}")
+
+
 def get_state_key(game):
     # board plus turn makes the state key
     board_text = "".join("".join(row) for row in game.board)
@@ -89,7 +101,7 @@ def update_q_value(q_table, state, action, reward, next_state, next_moves, alpha
 
 
 def train_q_learning(
-    episodes=20000,
+    episodes=50000,
     progress_callback=None,
     model_path=Q_TABLE_PATH,
     force_retrain=False,
@@ -110,17 +122,22 @@ def train_q_learning(
     q_table = {}
     recent_results = deque(maxlen=500)
     training_rows = []
+    phase_split = int(episodes * 0.8)
+
+    if phase_split <= 0:
+        phase_split = episodes
 
     for episode in tqdm(range(episodes), desc="Connect4 Q-learning", unit="episode"):
         # alternate which side the learner plays
         game = Connect4()
         q_player = "X" if episode % 2 == 0 else "O"
         history = []
+        opponent_type = "random" if episode < phase_split else "default"
 
         while not game.is_game_over():
             if game.current_player != q_player:
-                # random opponent turn
-                game.make_move(choose_random_move(game))
+                # let the chosen training opponent play
+                game.make_move(choose_training_opponent_move(game, opponent_type))
                 continue
 
             # state before the move
@@ -162,8 +179,9 @@ def train_q_learning(
             training_rows.append({
                 "episode": episode + 1,
                 "epsilon": epsilon,
+                "opponent": opponent_type,
                 "agent_win_rate": sum(1 for winner, player, _ in recent_results if winner == player) / total_recent,
-                "random_win_rate": sum(1 for winner, player, _ in recent_results if winner not in {player, "Draw"}) / total_recent,
+                "opponent_win_rate": sum(1 for winner, player, _ in recent_results if winner not in {player, "Draw"}) / total_recent,
                 "draw_rate": sum(1 for winner, _, _ in recent_results if winner == "Draw") / total_recent,
                 "avg_reward": sum(reward for _, _, reward in recent_results) / total_recent,
             })

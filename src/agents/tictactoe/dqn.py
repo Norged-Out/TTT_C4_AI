@@ -180,7 +180,7 @@ def train_dqn(
                             next_best.append(best_value)
 
                     next_best_tensor = torch.tensor(next_best, dtype=torch.float32)
-                    targets = rewards - gamma * next_best_tensor * (1.0 - dones)
+                    targets = rewards + gamma * next_best_tensor * (1.0 - dones)
 
                 # normal gradient step
                 loss = loss_fn(chosen_q, targets)

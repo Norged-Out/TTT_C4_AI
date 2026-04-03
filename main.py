@@ -49,7 +49,7 @@ def run_connect4_experiment_mode():
     from src.experiments.connect4_runner import run_experiments
 
     # run the experiment block
-    results = run_experiments(num_games=100)
+    results = run_experiments(num_games=10)
     write_results("connect4_results.csv", results)
     print("Connect 4 experiment run completed.")
 
@@ -81,12 +81,12 @@ def generate_connect4_models():
     from src.agents.connect4.dqn import DQN_MODEL_PATH, train_dqn
 
     print("Generating Connect 4 saved models")
-    print("Training Q-learning for 20000 episodes")
-    train_q_learning(episodes=20000, force_retrain=True)
+    print("Training Q-learning for 50000 episodes")
+    train_q_learning(episodes=50000, force_retrain=True)
     print(f"Saved Q-learning table to {Q_TABLE_PATH}")
 
-    print("Training DQN for 20000 episodes")
-    train_dqn(episodes=20000, force_retrain=True)
+    print("Training DQN for 50000 episodes")
+    train_dqn(episodes=50000, force_retrain=True)
     print(f"Saved DQN model to {DQN_MODEL_PATH}")
     print("Model generation completed.")
 
@@ -109,7 +109,8 @@ def run_connect4_pygame_mode():
         print(f"Missing dependency: {e}")
 
 
-if __name__ == "__main__":
+
+def main():
     # simple menu entry point
     print("Select Mode:")
     print("1 - Run Tic Tac Toe Pygame")
@@ -136,3 +137,7 @@ if __name__ == "__main__":
         generate_connect4_models()
     else:
         print("Invalid choice.")
+
+
+if __name__ == "__main__":
+    main()

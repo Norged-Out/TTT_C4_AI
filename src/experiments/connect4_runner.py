@@ -74,78 +74,78 @@ def play_one_game(first_agent, second_agent, q_table=None, dqn_model=None):
     }
 
 
-def run_matchup(x_agent, o_agent, num_games, q_table=None, dqn_model=None):
-    wins_x = 0
-    wins_o = 0
+def run_matchup(player1_agent, player2_agent, num_games, q_table=None, dqn_model=None):
+    player1_wins = 0
+    player2_wins = 0
     draws = 0
     total_moves = 0
-    total_x_time = 0.0
-    total_o_time = 0.0
-    total_x_nodes = 0
-    total_o_nodes = 0
+    total_player1_time = 0.0
+    total_player2_time = 0.0
+    total_player1_nodes = 0
+    total_player2_nodes = 0
 
-    print(f"Running Connect 4 matchup: {x_agent} vs {o_agent} ({num_games} games)")
+    print(f"Running Connect 4 matchup: {player1_agent} vs {player2_agent} ({num_games} games)")
 
     for i in range(num_games):
         # alternate who starts to make this fair
         if i % 2 == 0:
-            first_agent = x_agent
-            second_agent = o_agent
+            first_agent = player1_agent
+            second_agent = player2_agent
         else:
-            first_agent = o_agent
-            second_agent = x_agent
+            first_agent = player2_agent
+            second_agent = player1_agent
 
         result = play_one_game(first_agent, second_agent, q_table=q_table, dqn_model=dqn_model)
 
         total_moves += result["moves"]
-        if first_agent == x_agent:
-            total_x_time += result["first_time"]
-            total_o_time += result["second_time"]
-            total_x_nodes += result["first_nodes"]
-            total_o_nodes += result["second_nodes"]
+        if first_agent == player1_agent:
+            total_player1_time += result["first_time"]
+            total_player2_time += result["second_time"]
+            total_player1_nodes += result["first_nodes"]
+            total_player2_nodes += result["second_nodes"]
         else:
-            total_x_time += result["second_time"]
-            total_o_time += result["first_time"]
-            total_x_nodes += result["second_nodes"]
-            total_o_nodes += result["first_nodes"]
+            total_player1_time += result["second_time"]
+            total_player2_time += result["first_time"]
+            total_player1_nodes += result["second_nodes"]
+            total_player2_nodes += result["first_nodes"]
 
         if result["winner"] == "Draw":
             draws += 1
-        elif first_agent == x_agent and result["winner"] == "X":
-            wins_x += 1
-        elif first_agent == x_agent and result["winner"] == "O":
-            wins_o += 1
-        elif first_agent == o_agent and result["winner"] == "X":
-            wins_o += 1
+        elif first_agent == player1_agent and result["winner"] == "X":
+            player1_wins += 1
+        elif first_agent == player1_agent and result["winner"] == "O":
+            player2_wins += 1
+        elif first_agent == player2_agent and result["winner"] == "X":
+            player2_wins += 1
         else:
-            wins_x += 1
+            player1_wins += 1
 
         if (i + 1) % 5 == 0 or (i + 1) == num_games:
             print(
                 f"  completed {i + 1}/{num_games} games"
-                f" | X wins: {wins_x}"
-                f" | O wins: {wins_o}"
+                f" | Player 1 wins: {player1_wins}"
+                f" | Player 2 wins: {player2_wins}"
                 f" | Draws: {draws}"
             )
 
     return {
         "game": "Connect4",
-        "x_agent": x_agent,
-        "o_agent": o_agent,
+        "player1_agent": player1_agent,
+        "player2_agent": player2_agent,
         "games": num_games,
-        "x_starts": (num_games + 1) // 2,
-        "o_starts": num_games // 2,
-        "x_wins": wins_x,
-        "o_wins": wins_o,
+        "player1_starts": (num_games + 1) // 2,
+        "player2_starts": num_games // 2,
+        "player1_wins": player1_wins,
+        "player2_wins": player2_wins,
         "draws": draws,
-        "x_win_rate": wins_x / num_games,
-        "o_win_rate": wins_o / num_games,
+        "player1_win_rate": player1_wins / num_games,
+        "player2_win_rate": player2_wins / num_games,
         "draw_rate": draws / num_games,
         "avg_moves": total_moves / num_games,
-        "avg_x_time": total_x_time / num_games,
-        "avg_o_time": total_o_time / num_games,
-        "avg_x_nodes": total_x_nodes / num_games,
-        "avg_o_nodes": total_o_nodes / num_games,
+        "avg_player1_time": total_player1_time / num_games,
+        "avg_player2_time": total_player2_time / num_games,
+        "avg_player1_nodes": total_player1_nodes / num_games,
+        "avg_player2_nodes": total_player2_nodes / num_games,
     }
 
 
@@ -186,8 +186,8 @@ def run_experiments(num_games=100):
         ("DQN", "DQN"),
     ]
 
-    for x_agent, o_agent in pairings:
-        results.append(run_matchup(x_agent, o_agent, num_games, q_table=q_table, dqn_model=dqn_model))
+    for player1_agent, player2_agent in pairings:
+        results.append(run_matchup(player1_agent, player2_agent, num_games, q_table=q_table, dqn_model=dqn_model))
 
     print("Finished Connect 4 experiments")
     return results
