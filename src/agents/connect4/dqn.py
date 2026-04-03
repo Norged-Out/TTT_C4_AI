@@ -102,6 +102,7 @@ def train_dqn(
     min_epsilon = 0.05
     batch_size = 64
     replay_size = 20000
+    target_sync_interval = 500
 
     if os.path.exists(model_path) and not force_retrain:
         model = DQNNet()
@@ -110,6 +111,9 @@ def train_dqn(
         return model
 
     model = DQNNet()
+    target_model = DQNNet()
+    target_model.load_state_dict(model.state_dict())
+    target_model.eval()
 
     # training setup
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -118,6 +122,7 @@ def train_dqn(
     recent_results = deque(maxlen=500)
     training_rows = []
     phase_split = int(episodes * 0.8)
+    update_steps = 0
 
     if phase_split <= 0:
         phase_split = episodes
@@ -171,7 +176,7 @@ def train_dqn(
 
             with torch.no_grad():
                 # next-state values for the target
-                next_q_values = model(next_states)
+                next_q_values = target_model(next_states)
                 next_best = []
 
                 for i, (_, _, _, _, legal_moves, done_flag) in enumerate(batch):
@@ -190,6 +195,11 @@ def train_dqn(
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            update_steps += 1
+
+            # refresh the target network every so often
+            if update_steps % target_sync_interval == 0:
+                target_model.load_state_dict(model.state_dict())
 
         # slowly reduce random exploration
         epsilon = max(min_epsilon, epsilon * epsilon_decay)

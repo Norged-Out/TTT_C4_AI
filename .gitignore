@@ -193,6 +193,7 @@ desktop.ini
 
 # Experiment outputs
 *.csv
+*.png
 models/
 
 # Ruff stuff:

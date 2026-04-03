@@ -30,15 +30,11 @@ def write_results(filename, results):
 
 
 def run_tictactoe_experiment_mode():
-    try:
-        # Tic Tac Toe uses the lighter experiment set
-        from src.experiments.tictactoe_runner import run_experiments
+    # Tic Tac Toe uses the lighter experiment set
+    from src.experiments.tictactoe_runner import run_experiments
 
-        # run the experiment block
-        results = run_experiments(num_games=50)
-    except ModuleNotFoundError as e:
-        print(f"Missing dependency: {e}")
-        return
+    # run the experiment block
+    results = run_experiments(num_games=50)
 
     write_results("tictactoe_results.csv", results)
     print("Experiment run completed.")
@@ -55,13 +51,9 @@ def run_connect4_experiment_mode():
 
 
 def generate_tictactoe_models():
-    try:
-        # generate both saved RL agents together
-        from src.agents.tictactoe.q_learning import Q_TABLE_PATH, train_q_learning
-        from src.agents.tictactoe.dqn import DQN_MODEL_PATH, train_dqn
-    except ModuleNotFoundError as e:
-        print(f"Missing dependency: {e}")
-        return
+    # generate both saved RL agents together
+    from src.agents.tictactoe.q_learning import Q_TABLE_PATH, train_q_learning
+    from src.agents.tictactoe.dqn import DQN_MODEL_PATH, train_dqn
 
     print("Generating Tic Tac Toe saved models")
     print("Training Q-learning for 20000 episodes")
@@ -92,21 +84,21 @@ def generate_connect4_models():
 
 
 def run_tictactoe_pygame_mode():
-    try:
-        # open the Tic Tac Toe window
-        from src.ui.tictactoe import run_game
-        run_game()
-    except ModuleNotFoundError as e:
-        print(f"Missing dependency: {e}")
+    # open the Tic Tac Toe window
+    from src.ui.tictactoe import run_game
+    run_game()
 
 
 def run_connect4_pygame_mode():
-    try:
-        # open the Connect 4 window
-        from src.ui.connect4 import run_game
-        run_game()
-    except ModuleNotFoundError as e:
-        print(f"Missing dependency: {e}")
+    # open the Connect 4 window
+    from src.ui.connect4 import run_game
+    run_game()
+
+
+def run_analysis_mode():
+    # build figures and summary tables from saved results
+    from src.experiments.analysis import run_analysis
+    run_analysis()
 
 
 
@@ -119,6 +111,7 @@ def main():
     print("4 - Run Connect 4 Experiments")
     print("5 - Generate Tic Tac Toe RL Models")
     print("6 - Generate Connect 4 RL Models")
+    print("7 - Run Analysis")
 
     # one simple input is enough here
     choice = input("Enter choice: ").strip()
@@ -135,6 +128,8 @@ def main():
         generate_tictactoe_models()
     elif choice == "6":
         generate_connect4_models()
+    elif choice == "7":
+        run_analysis_mode()
     else:
         print("Invalid choice.")
 
