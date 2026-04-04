@@ -18,7 +18,7 @@ MODES = [
 ]
 
 SEARCH_DEPTH = 5
-AI_DELAY_SECONDS = 0.45
+DROP_SPEED = 900
 
 
 def reset_game(state):
@@ -26,6 +26,8 @@ def reset_game(state):
     state["winner_text"] = ""
     state["status"] = "Game reset."
     state["hover_col"] = None
+    state["pending_move"] = None
+    state["drop_token"] = None
     state["train_progress"] = None
     state["game_started"] = False
     state["expanded_dropdown"] = None
@@ -180,6 +182,59 @@ def draw_board(screen, pygame, board_rect, game, hover_col, show_hover):
             pygame.draw.circle(screen, grid, (cx, cy), radius, 3)
 
 
+def draw_drop_token(screen, pygame, board_rect, drop_token):
+    if drop_token is None:
+        return
+
+    x0, y0, cell_size = get_board_layout(board_rect)
+    cx = x0 + drop_token["col"] * cell_size + cell_size // 2
+    cy = int(drop_token["y"])
+    radius = int(cell_size * 0.36)
+    color = (200, 80, 40) if drop_token["player"] == "X" else (240, 210, 70)
+    grid = (30, 30, 30)
+
+    pygame.draw.circle(screen, color, (cx, cy), radius)
+    pygame.draw.circle(screen, grid, (cx, cy), radius, 3)
+
+
+def start_drop_animation(state, col):
+    row = state["game"].get_drop_row(col)
+    if row is None:
+        state["status"] = "That column is full."
+        return False
+
+    x0, y0, cell_size = get_board_layout(state["board_rect"])
+    start_y = y0 + cell_size // 2
+    target_y = y0 + (row + 1) * cell_size + cell_size // 2
+
+    state["pending_move"] = col
+    state["drop_token"] = {
+        "player": state["game"].current_player,
+        "col": col,
+        "y": float(start_y),
+        "target_y": float(target_y),
+    }
+    return True
+
+
+def finish_drop_animation(state):
+    if state["pending_move"] is None:
+        return
+
+    col = state["pending_move"]
+    player = state["game"].current_player
+    state["game"].make_move(col)
+    state["pending_move"] = None
+    state["drop_token"] = None
+
+    if state["game"].winner is not None:
+        handle_game_end(state)
+        return
+
+    label = "Player 1" if player == "X" else "Player 2"
+    state["status"] = f"{label} played column {col + 1}."
+
+
 def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
     pygame.draw.rect(screen, (70, 70, 70), rect, border_radius=8)
     pygame.draw.rect(screen, (110, 110, 110), rect, 2, border_radius=8)
@@ -288,6 +343,8 @@ def run_game():
         "winner_text": "",
         "status": "Ready.",
         "hover_col": None,
+        "pending_move": None,
+        "drop_token": None,
         "train_progress": None,
         "q_table": None,
         "dqn_model": None,
@@ -308,6 +365,7 @@ def run_game():
 
     sidebar_rect = pygame.Rect(0, 0, sidebar_w, screen_h)
     board_rect = pygame.Rect(sidebar_w, 0, screen_w - sidebar_w, screen_h)
+    state["board_rect"] = board_rect
 
     ui_rects = {
         "player1_dropdown": pygame.Rect(20, 124, sidebar_w - 40, 38),
@@ -325,9 +383,11 @@ def run_game():
         show_hover = (
             state["game_started"]
             and state["game"].winner is None
+            and state["drop_token"] is None
             and get_current_mode(state) == "Human"
         )
         draw_board(screen, pygame, board_rect, state["game"], state["hover_col"], show_hover)
+        draw_drop_token(screen, pygame, board_rect, state["drop_token"])
         pygame.display.flip()
 
     while running:
@@ -344,10 +404,16 @@ def run_game():
                     reset_game(state)
 
             elif event.type == pygame.MOUSEMOTION:
-                state["hover_col"] = get_hover_column(event.pos, board_rect)
+                if state["drop_token"] is None:
+                    state["hover_col"] = get_hover_column(event.pos, board_rect)
+                else:
+                    state["hover_col"] = None
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
+
+                if state["drop_token"] is not None:
+                    continue
 
                 handled_option = False
                 for player_key in ["player1", "player2"]:
@@ -403,14 +469,18 @@ def run_game():
                 if col is None:
                     continue
 
-                if not state["game"].make_move(col):
-                    state["status"] = "That column is full."
+                if not start_drop_animation(state, col):
                     continue
-
-                state["status"] = f"Played column {col + 1}."
                 state["last_ai_move_time"] = now
-                if state["game"].winner is not None:
-                    handle_game_end(state)
+
+        if state["drop_token"] is not None:
+            state["drop_token"]["y"] += DROP_SPEED * clock.get_time() / 1000.0
+            if state["drop_token"]["y"] >= state["drop_token"]["target_y"]:
+                finish_drop_animation(state)
+                state["last_ai_move_time"] = time.perf_counter()
+            render_frame()
+            clock.tick(60)
+            continue
 
         if not state["game_started"] or state["game"].winner is not None:
             render_frame()
@@ -423,21 +493,13 @@ def run_game():
             clock.tick(60)
             continue
 
-        if now - state["last_ai_move_time"] < AI_DELAY_SECONDS:
-            render_frame()
-            clock.tick(60)
-            continue
-
         move, stats = get_ai_move(state, current_mode)
-        if move is None:
-            state["status"] = f"{current_mode} not added yet."
-        elif state["game"].make_move(move):
-            state["status"] = f"{current_mode} played column {move + 1}."
+        if start_drop_animation(state, move):
             if stats is not None:
-                state["status"] += f" ({stats['elapsed_seconds']:.2f}s)"
+                state["status"] = f"{current_mode} picked column {move + 1} ({stats['elapsed_seconds']:.2f}s)"
+            else:
+                state["status"] = f"{current_mode} picked column {move + 1}."
             state["last_ai_move_time"] = time.perf_counter()
-            if state["game"].winner is not None:
-                handle_game_end(state)
 
         render_frame()
         clock.tick(60)

@@ -95,7 +95,7 @@ def train_dqn(
     force_retrain=False,
     log_path=TRAINING_LOG_PATH,
 ):
-    # load the saved model unless we want a fresh run
+    # load the saved model unless force_retrain is on
     gamma = 0.9
     epsilon = 0.3
     min_epsilon = 0.05

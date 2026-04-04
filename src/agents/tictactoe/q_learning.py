@@ -89,7 +89,7 @@ def train_q_learning(
     force_retrain=False,
     log_path=TRAINING_LOG_PATH,
 ):
-    # load the saved table unless we want a fresh run
+    # load the saved table unless force_retrain is on
     if os.path.exists(model_path) and not force_retrain:
         with open(model_path, "rb") as f:
             return pickle.load(f)
