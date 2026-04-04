@@ -150,7 +150,7 @@ def train_q_learning(
         recent_results.append((game.winner, q_player, final_reward))
 
         if (episode + 1) % 250 == 0 or (episode + 1) == episodes:
-            # keep a small convergence log for the report
+            # save a small training log
             total_recent = len(recent_results)
             training_rows.append({
                 "episode": episode + 1,

@@ -272,7 +272,7 @@ def choose_minimax_move(game, time_limit=None):
 
 
 def choose_minimax_move_limited(game, depth_limit=5, time_limit=None):
-    # practical depth-limited version
+    # depth-limited version
     if game.winner is not None:
         raise ValueError("Cannot run minimax on a finished game.")
 

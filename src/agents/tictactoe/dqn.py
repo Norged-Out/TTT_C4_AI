@@ -1,6 +1,6 @@
 """
 Author: Priyansh Nayak
-Description: Simple DQN agent for Tic Tac Toe
+Description: DQN agent for Tic Tac Toe
 """
 
 import os
@@ -199,7 +199,7 @@ def train_dqn(
         recent_winners.append(game.winner)
 
         if (episode + 1) % 100 == 0 or (episode + 1) == episodes:
-            # keep a small convergence log for the report
+            # save a small training log
             total_recent = len(recent_winners)
             training_rows.append({
                 "episode": episode + 1,

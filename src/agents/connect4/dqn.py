@@ -1,6 +1,6 @@
 """
 Author: Priyansh Nayak
-Description: Simple DQN agent for Connect 4
+Description: DQN agent for Connect 4
 """
 
 import os
@@ -198,7 +198,7 @@ def train_dqn(
         recent_results.append((game.winner, dqn_player, final_reward))
 
         if (episode + 1) % 250 == 0 or (episode + 1) == episodes:
-            # keep a small convergence log for the report
+            # save a small training log
             total_recent = len(recent_results)
             training_rows.append({
                 "episode": episode + 1,

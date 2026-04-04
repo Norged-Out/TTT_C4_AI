@@ -173,7 +173,7 @@ def min_value_ab_limited(game, ai_player, alpha, beta, stats, depth, depth_limit
 
 
 def choose_alphabeta_move_limited(game, depth_limit=5, time_limit=None):
-    # practical alpha-beta version
+    # depth-limited alpha-beta version
     if game.winner is not None:
         raise ValueError("Cannot run alpha beta on a finished game.")
 

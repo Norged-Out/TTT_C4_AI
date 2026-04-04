@@ -139,7 +139,7 @@ def train_q_learning(
         recent_winners.append(game.winner)
 
         if (episode + 1) % 100 == 0 or (episode + 1) == episodes:
-            # keep a small convergence log for the report
+            # save a small training log
             total_recent = len(recent_winners)
             training_rows.append({
                 "episode": episode + 1,
