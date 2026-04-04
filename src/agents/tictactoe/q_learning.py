@@ -98,7 +98,6 @@ def train_q_learning(
     alpha = 0.1
     gamma = 0.9
     epsilon = 0.3
-    epsilon_decay = 0.9998
     min_epsilon = 0.05
 
     q_table = {}
@@ -136,7 +135,7 @@ def train_q_learning(
             update_q_value(q_table, state, action, reward, None, [], alpha, gamma)
 
         # slowly reduce random exploration
-        epsilon = max(min_epsilon, epsilon * epsilon_decay)
+        epsilon = max(min_epsilon, epsilon * 0.9998)
         recent_winners.append(game.winner)
 
         if (episode + 1) % 100 == 0 or (episode + 1) == episodes:

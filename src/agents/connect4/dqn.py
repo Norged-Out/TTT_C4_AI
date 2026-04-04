@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from src.experiments.training_log import write_training_log
 from src.games.connect4.game import Connect4
-from src.agents.connect4.q_learning import choose_training_opponent_move, reward_from_winner
+from src.agents.connect4.q_learning import reward_from_winner
 
 
 DQN_MODEL_PATH = os.path.join("models", "connect4_dqn.pt")
@@ -98,11 +98,7 @@ def train_dqn(
     # load the saved model unless we want a fresh run
     gamma = 0.9
     epsilon = 0.3
-    epsilon_decay = 0.99995
     min_epsilon = 0.05
-    batch_size = 64
-    replay_size = 20000
-    target_sync_interval = 500
 
     if os.path.exists(model_path) and not force_retrain:
         model = DQNNet()
@@ -118,26 +114,20 @@ def train_dqn(
     # training setup
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.SmoothL1Loss()
-    replay = deque(maxlen=replay_size)
+    replay = deque(maxlen=20000)
     recent_results = deque(maxlen=500)
     training_rows = []
-    # phase_split = int(episodes * 0.8)
     update_steps = 0
-
-    # if phase_split <= 0:
-    #     phase_split = episodes
 
     for episode in tqdm(range(episodes), desc="Connect4 DQN", unit="episode"):
         # alternate which side the learner plays
         game = Connect4()
         dqn_player = "X" if episode % 2 == 0 else "O"
-        opponent_type = "random"
-        # opponent_type = "random" if episode < phase_split else "default"
 
         while not game.is_game_over():
             if game.current_player != dqn_player:
                 # let the chosen training opponent play
-                game.make_move(choose_training_opponent_move(game, opponent_type))
+                game.make_move(random.choice(game.available_moves()))
                 continue
 
             # state before the move
@@ -160,11 +150,11 @@ def train_dqn(
             # keep the transition for replay
             replay.append((state, move, reward, next_state, next_moves, done))
 
-            if len(replay) < batch_size:
+            if len(replay) < 64:
                 continue
 
             # train from random replay samples
-            batch = random.sample(replay, batch_size)
+            batch = random.sample(replay, 64)
             states = torch.stack([item[0] for item in batch])
             actions = torch.tensor([item[1] for item in batch], dtype=torch.long)
             rewards = torch.tensor([item[2] for item in batch], dtype=torch.float32)
@@ -199,11 +189,11 @@ def train_dqn(
             update_steps += 1
 
             # refresh the target network every so often
-            if update_steps % target_sync_interval == 0:
+            if update_steps % 500 == 0:
                 target_model.load_state_dict(model.state_dict())
 
         # slowly reduce random exploration
-        epsilon = max(min_epsilon, epsilon * epsilon_decay)
+        epsilon = max(min_epsilon, epsilon * 0.99995)
         final_reward = reward_from_winner(game.winner, dqn_player)
         recent_results.append((game.winner, dqn_player, final_reward))
 
@@ -213,7 +203,6 @@ def train_dqn(
             training_rows.append({
                 "episode": episode + 1,
                 "epsilon": epsilon,
-                "opponent": opponent_type,
                 "agent_win_rate": sum(1 for winner, player, _ in recent_results if winner == player) / total_recent,
                 "opponent_win_rate": sum(1 for winner, player, _ in recent_results if winner not in {player, "Draw"}) / total_recent,
                 "draw_rate": sum(1 for winner, _, _ in recent_results if winner == "Draw") / total_recent,

@@ -7,7 +7,6 @@ import time
 
 from src.agents.connect4.minimax import (
     INF,
-    SearchTimeout,
     build_stats,
     check_timeout,
     clone_game,
@@ -103,13 +102,13 @@ def choose_alphabeta_move(game, time_limit=None):
 
             if best_score > alpha:
                 alpha = best_score
-    except SearchTimeout:
+    except TimeoutError:
         stats["timed_out"] = True
 
     if best_move is None:
         stats["elapsed_seconds"] = time.perf_counter() - start
         stats.pop("deadline", None)
-        raise SearchTimeout(stats)
+        raise TimeoutError(stats)
 
     finish_stats(stats, start, best_move, best_score)
     return best_move, stats
@@ -209,13 +208,13 @@ def choose_alphabeta_move_limited(game, depth_limit=5, time_limit=None):
 
             if best_score > alpha:
                 alpha = best_score
-    except SearchTimeout:
+    except TimeoutError:
         stats["timed_out"] = True
 
     if best_move is None:
         stats["elapsed_seconds"] = time.perf_counter() - start
         stats.pop("deadline", None)
-        raise SearchTimeout(stats)
+        raise TimeoutError(stats)
 
     finish_stats(stats, start, best_move, best_score)
     return best_move, stats

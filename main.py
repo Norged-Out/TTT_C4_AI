@@ -45,7 +45,7 @@ def run_connect4_experiment_mode():
     from src.experiments.connect4_runner import run_experiments
 
     # run the experiment block
-    results = run_experiments(num_games=10)
+    results = run_experiments(num_games=100)
     write_results("connect4_results.csv", results)
     print("Connect 4 experiment run completed.")
 

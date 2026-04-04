@@ -31,7 +31,8 @@ def handle_game_end(state):
         state["winner_text"] = "Draw"
         return
 
-    state["winner_text"] = f"{winner} wins"
+    label = "Player 1" if winner == "X" else "Player 2"
+    state["winner_text"] = f"{label} wins"
 
 
 def get_board_layout(board_rect):
@@ -159,7 +160,6 @@ def draw_board(screen, pygame, board_rect, game, hover_col):
             pygame.draw.circle(screen, color, (cx, cy), radius)
             pygame.draw.circle(screen, grid, (cx, cy), radius, 3)
 
-
 def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, button_rects):
     pygame.draw.rect(screen, (35, 35, 35), sidebar_rect)
 
@@ -174,7 +174,8 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, button_rects):
     y += 34
 
     if state["game"].winner is None:
-        turn_text = fonts["body"].render(f"Turn: {state['game'].current_player}", True, (230, 230, 230))
+        current_label = "Player 1" if state["game"].current_player == "X" else "Player 2"
+        turn_text = fonts["body"].render(f"Turn: {current_label}", True, (230, 230, 230))
     else:
         turn_text = fonts["body"].render(f"Result: {state['winner_text']}", True, (230, 230, 230))
     screen.blit(turn_text, (sidebar_rect.left + 20, y))

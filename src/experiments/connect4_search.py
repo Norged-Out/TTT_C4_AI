@@ -4,7 +4,7 @@ Description: Timed search benchmark for Connect 4 minimax and alpha beta
 """
 
 from src.agents.connect4.alphabeta import choose_alphabeta_move, choose_alphabeta_move_limited
-from src.agents.connect4.minimax import SearchTimeout, choose_minimax_move, choose_minimax_move_limited
+from src.agents.connect4.minimax import choose_minimax_move, choose_minimax_move_limited
 from src.games.connect4.game import Connect4
 
 
@@ -33,7 +33,7 @@ def run_search(search_name, time_limit=None, depth_limit=None):
         stats["chosen_move"] = move
         return stats
 
-    except SearchTimeout as e:
+    except TimeoutError as e:
         # timed runs return partial stats
         if e.args:
             stats = e.args[0]

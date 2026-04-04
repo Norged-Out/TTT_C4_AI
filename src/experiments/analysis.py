@@ -6,6 +6,8 @@ Description: Loads experiment CSVs, builds summary tables, and saves plots
 import os
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -106,6 +108,18 @@ def save_table(df, name):
     df.to_csv(os.path.join(TABLE_DIR, name), index=False)
 
 
+def pairwise_summary(df, game_name):
+    long_df = matchup_to_long(df)
+    if long_df.empty:
+        return
+
+    summary = long_df[
+        ["agent", "opponent", "win_rate", "draw_rate", "avg_time", "avg_nodes", "avg_moves"]
+    ].copy()
+    summary = summary.sort_values(["agent", "opponent"]).reset_index(drop=True)
+    save_table(summary, f"{game_name.lower()}_pairwise_summary.csv")
+
+
 def agent_summary(df, game_name):
     long_df = matchup_to_long(df)
     if long_df.empty:
@@ -125,6 +139,33 @@ def agent_summary(df, game_name):
     save_table(summary, f"{game_name.lower()}_agent_summary.csv")
 
 
+def rl_summary(df, game_name):
+    long_df = matchup_to_long(df)
+    if long_df.empty:
+        return
+
+    rl_df = long_df[long_df["agent"].isin(["QLearning", "DQN"])].copy()
+    if rl_df.empty:
+        return
+
+    rows = []
+    for agent_name in ["QLearning", "DQN"]:
+        subset = rl_df[rl_df["agent"] == agent_name]
+        if subset.empty:
+            continue
+
+        default_subset = subset[subset["opponent"] == "Default"]
+        rows.append({
+            "agent": agent_name,
+            "mean_win_rate": subset["win_rate"].mean(),
+            "vs_default_win_rate": default_subset["win_rate"].mean() if not default_subset.empty else pd.NA,
+            "mean_time": subset["avg_time"].mean(),
+        })
+
+    summary = pd.DataFrame(rows).sort_values("mean_win_rate", ascending=False)
+    save_table(summary, f"{game_name.lower()}_rl_summary.csv")
+
+
 def default_summary(df, game_name):
     long_df = matchup_to_long(df)
     if long_df.empty:
@@ -136,6 +177,34 @@ def default_summary(df, game_name):
 
     summary = summary.sort_values("win_rate", ascending=False)
     save_table(summary, f"{game_name.lower()}_vs_default.csv")
+
+
+def overall_summary(ttt_df, c4_df):
+    rows = []
+
+    for game_name, df in [("TicTacToe", ttt_df), ("Connect4", c4_df)]:
+        long_df = matchup_to_long(df)
+        if long_df.empty:
+            continue
+
+        for agent_name in sorted(long_df["agent"].unique()):
+            subset = long_df[long_df["agent"] == agent_name]
+            default_subset = subset[subset["opponent"] == "Default"]
+
+            rows.append({
+                "game": game_name,
+                "agent": agent_name,
+                "mean_win_rate": subset["win_rate"].mean(),
+                "vs_default_win_rate": default_subset["win_rate"].mean() if not default_subset.empty else pd.NA,
+                "mean_time": subset["avg_time"].mean(),
+                "mean_nodes": subset["avg_nodes"].mean(),
+            })
+
+    if not rows:
+        return
+
+    summary = pd.DataFrame(rows).sort_values(["game", "mean_win_rate"], ascending=[True, False])
+    save_table(summary, "overall_agent_summary.csv")
 
 
 def plot_win_rate_heatmap(df, game_name, filename):
@@ -377,31 +446,64 @@ def write_summary_notes(ttt_df, c4_df):
 
     if ttt_df is not None and not ttt_df.empty:
         lines.append("Tic Tac Toe")
-        default_rows = matchup_to_long(ttt_df)
-        default_rows = default_rows[default_rows["opponent"] == "Default"]
+        ttt_long = matchup_to_long(ttt_df)
+        default_rows = ttt_long[ttt_long["opponent"] == "Default"]
         if not default_rows.empty:
             best = default_rows.sort_values("win_rate", ascending=False).iloc[0]
             lines.append(
                 f"Best vs default: {best['agent']} win rate {best['win_rate']:.2f}"
+            )
+
+        overall = (
+            ttt_long.groupby("agent", as_index=False)["win_rate"]
+            .mean()
+            .sort_values("win_rate", ascending=False)
+        )
+        if not overall.empty:
+            best = overall.iloc[0]
+            lines.append(
+                f"Strongest overall: {best['agent']} mean win rate {best['win_rate']:.2f}"
             )
 
     if c4_df is not None and not c4_df.empty:
         lines.append("")
         lines.append("Connect 4")
-        default_rows = matchup_to_long(c4_df)
-        default_rows = default_rows[default_rows["opponent"] == "Default"]
+        c4_long = matchup_to_long(c4_df)
+        default_rows = c4_long[c4_long["opponent"] == "Default"]
         if not default_rows.empty:
             best = default_rows.sort_values("win_rate", ascending=False).iloc[0]
             lines.append(
                 f"Best vs default: {best['agent']} win rate {best['win_rate']:.2f}"
             )
 
-        search_rows = matchup_to_long(c4_df)
-        search_rows = search_rows[search_rows["agent"].isin(["Minimax", "AlphaBeta"])]
+        overall = (
+            c4_long.groupby("agent", as_index=False)["win_rate"]
+            .mean()
+            .sort_values("win_rate", ascending=False)
+        )
+        if not overall.empty:
+            best = overall.iloc[0]
+            lines.append(
+                f"Strongest overall: {best['agent']} mean win rate {best['win_rate']:.2f}"
+            )
+
+        search_rows = c4_long[c4_long["agent"].isin(["Minimax", "AlphaBeta"])]
         if not search_rows.empty:
             fastest = search_rows.sort_values("avg_time").iloc[0]
             lines.append(
                 f"Fastest search agent: {fastest['agent']} avg time {fastest['avg_time']:.3f}s"
+            )
+
+        rl_rows = c4_long[c4_long["agent"].isin(["QLearning", "DQN"])]
+        if not rl_rows.empty:
+            best_rl = (
+                rl_rows.groupby("agent", as_index=False)["win_rate"]
+                .mean()
+                .sort_values("win_rate", ascending=False)
+                .iloc[0]
+            )
+            lines.append(
+                f"Best RL agent: {best_rl['agent']} mean win rate {best_rl['win_rate']:.2f}"
             )
 
     if not lines:
@@ -415,10 +517,15 @@ def run_analysis():
     ttt_df = normalize_matchup_df(load_csv("results/tictactoe_results.csv"))
     c4_df = normalize_matchup_df(load_csv("results/connect4_results.csv"))
 
+    pairwise_summary(ttt_df, "tictactoe")
+    pairwise_summary(c4_df, "connect4")
     agent_summary(ttt_df, "tictactoe")
     agent_summary(c4_df, "connect4")
+    rl_summary(ttt_df, "tictactoe")
+    rl_summary(c4_df, "connect4")
     default_summary(ttt_df, "tictactoe")
     default_summary(c4_df, "connect4")
+    overall_summary(ttt_df, c4_df)
 
     plot_win_rate_heatmap(ttt_df, "Tic Tac Toe", "tictactoe_win_rates.png")
     plot_win_rate_heatmap(c4_df, "Connect 4", "connect4_win_rates.png")

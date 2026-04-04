@@ -8,10 +8,6 @@ import time
 from src.games.connect4.game import Connect4
 
 
-class SearchTimeout(Exception):
-    pass
-
-
 INF = 10**9
 
 
@@ -105,7 +101,7 @@ def check_timeout(stats):
         return
 
     if time.perf_counter() >= stats["deadline"]:
-        raise SearchTimeout
+        raise TimeoutError
 
 
 def visit_state(stats, depth):
@@ -263,13 +259,13 @@ def choose_minimax_move(game, time_limit=None):
             if score > best_score:
                 best_score = score
                 best_move = move
-    except SearchTimeout:
+    except TimeoutError:
         stats["timed_out"] = True
 
     if best_move is None:
         stats["elapsed_seconds"] = time.perf_counter() - start
         stats.pop("deadline", None)
-        raise SearchTimeout(stats)
+        raise TimeoutError(stats)
 
     finish_stats(stats, start, best_move, best_score)
     return best_move, stats
@@ -297,13 +293,13 @@ def choose_minimax_move_limited(game, depth_limit=5, time_limit=None):
             if score > best_score:
                 best_score = score
                 best_move = move
-    except SearchTimeout:
+    except TimeoutError:
         stats["timed_out"] = True
 
     if best_move is None:
         stats["elapsed_seconds"] = time.perf_counter() - start
         stats.pop("deadline", None)
-        raise SearchTimeout(stats)
+        raise TimeoutError(stats)
 
     finish_stats(stats, start, best_move, best_score)
     return best_move, stats

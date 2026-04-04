@@ -107,11 +107,7 @@ def train_dqn(
     # load the saved model unless we want a fresh run
     gamma = 0.9
     epsilon = 0.3
-    epsilon_decay = 0.9995
     min_epsilon = 0.05
-    batch_size = 64
-    replay_size = 10000
-    target_sync_interval = 200
 
     if os.path.exists(model_path) and not force_retrain:
         model = DQNNet()
@@ -127,7 +123,7 @@ def train_dqn(
     # training setup
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.MSELoss()
-    replay = deque(maxlen=replay_size)
+    replay = deque(maxlen=10000)
     recent_winners = deque(maxlen=200)
     training_rows = []
     update_steps = 0
@@ -158,9 +154,9 @@ def train_dqn(
 
             replay.append((state, move, reward, next_state, next_moves, done))
 
-            if len(replay) >= batch_size:
+            if len(replay) >= 64:
                 # train from random replay samples
-                batch = random.sample(replay, batch_size)
+                batch = random.sample(replay, 64)
 
                 states = torch.stack([item[0] for item in batch])
                 actions = torch.tensor([item[1] for item in batch], dtype=torch.long)
@@ -195,11 +191,11 @@ def train_dqn(
                 update_steps += 1
 
                 # refresh the target network every so often
-                if update_steps % target_sync_interval == 0:
+                if update_steps % 200 == 0:
                     target_model.load_state_dict(model.state_dict())
 
         # slowly reduce random exploration
-        epsilon = max(min_epsilon, epsilon * epsilon_decay)
+        epsilon = max(min_epsilon, epsilon * 0.9995)
         recent_winners.append(game.winner)
 
         if (episode + 1) % 100 == 0 or (episode + 1) == episodes:

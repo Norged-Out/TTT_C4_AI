@@ -1,0 +1,9 @@
+Tic Tac Toe
+Best vs default: Minimax win rate 0.56
+Strongest overall: Minimax mean win rate 0.41
+
+Connect 4
+Best vs default: AlphaBeta win rate 0.87
+Strongest overall: AlphaBeta mean win rate 0.76
+Fastest search agent: AlphaBeta avg time 0.572s
+Best RL agent: DQN mean win rate 0.22
