@@ -37,7 +37,7 @@ def run_tictactoe_experiment_mode():
     results = run_experiments(num_games=50)
 
     write_results("tictactoe_results.csv", results)
-    print("Experiment run completed.")
+    print("Done.")
 
 
 def run_connect4_experiment_mode():
@@ -47,7 +47,7 @@ def run_connect4_experiment_mode():
     # run the experiment block
     results = run_experiments(num_games=100)
     write_results("connect4_results.csv", results)
-    print("Connect 4 experiment run completed.")
+    print("Done.")
 
 
 def generate_tictactoe_models():
@@ -64,7 +64,7 @@ def generate_tictactoe_models():
     train_dqn(episodes=20000, force_retrain=True)
     print(f"Saved DQN model to {DQN_MODEL_PATH}")
 
-    print("Model generation completed.")
+    print("Done.")
 
 
 def generate_connect4_models():
@@ -80,7 +80,7 @@ def generate_connect4_models():
     print("Training DQN for 50000 episodes")
     train_dqn(episodes=50000, force_retrain=True)
     print(f"Saved DQN model to {DQN_MODEL_PATH}")
-    print("Model generation completed.")
+    print("Done.")
 
 
 def run_tictactoe_pygame_mode():
@@ -104,14 +104,14 @@ def run_analysis_mode():
 
 def main():
     # simple menu entry point
-    print("Select Mode:")
+    print("Menu:")
     print("1 - Run Tic Tac Toe Pygame")
     print("2 - Run Connect 4 Pygame")
     print("3 - Run Tic Tac Toe Experiments")
     print("4 - Run Connect 4 Experiments")
     print("5 - Generate Tic Tac Toe RL Models")
     print("6 - Generate Connect 4 RL Models")
-    print("7 - Run Analysis")
+    print("7 - Build Figures")
 
     # one simple input is enough here
     choice = input("Enter choice: ").strip()
