@@ -20,6 +20,31 @@ elapsed_seconds: 600.000075100048
 finished: False
 
 Connect 4 Depth-Limited Benchmark
+Depth limit: 4
+Maximum possible moves in standard Connect 4: 42
+
+Search: Minimax
+chosen_move: 3
+nodes_visited: 2800
+terminal_states: 0
+cutoff_states: 2401
+max_depth_reached: 4
+timed_out: False
+elapsed_seconds: 0.10714290000032634
+finished: True
+
+Search: AlphaBeta
+chosen_move: 3
+nodes_visited: 460
+terminal_states: 0
+cutoff_states: 331
+max_depth_reached: 4
+prunes: 95
+timed_out: False
+elapsed_seconds: 0.013275499994051643
+finished: True
+
+Connect 4 Depth-Limited Benchmark
 Depth limit: 5
 Maximum possible moves in standard Connect 4: 42
 

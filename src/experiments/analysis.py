@@ -4,12 +4,14 @@ Description: Loads experiment CSVs, builds summary tables, and saves plots
 """
 
 import os
+import pickle
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
+import torch
 
 
 FIG_DIR = "figures"
@@ -513,6 +515,74 @@ def write_summary_notes(ttt_df, c4_df):
         f.write("\n".join(lines))
 
 
+def save_rl_model_summaries():
+    rows = []
+    q_rows = []
+
+    for game_name, agent_name, path in [
+        ("TicTacToe", "QLearning", "models/tictactoe_q_table.pkl"),
+        ("Connect4", "QLearning", "models/connect4_q_table.pkl"),
+    ]:
+        filepath = Path(path)
+        if not filepath.exists():
+            continue
+
+        with open(filepath, "rb") as f:
+            q_table = pickle.load(f)
+
+        values = list(q_table.values())
+        rows.append({
+            "game": game_name,
+            "agent": agent_name,
+            "entries": len(q_table),
+            "value_min": min(values),
+            "value_max": max(values),
+            "value_mean": sum(values) / len(values),
+        })
+
+        top_entries = sorted(q_table.items(), key=lambda kv: kv[1], reverse=True)[:5]
+        for rank, (state_action, value) in enumerate(top_entries, start=1):
+            q_rows.append({
+                "game": game_name,
+                "agent": agent_name,
+                "rank": rank,
+                "state_action": str(state_action),
+                "value": value,
+            })
+
+    for game_name, agent_name, path in [
+        ("TicTacToe", "DQN", "models/tictactoe_dqn.pt"),
+        ("Connect4", "DQN", "models/connect4_dqn.pt"),
+    ]:
+        filepath = Path(path)
+        if not filepath.exists():
+            continue
+
+        state_dict = torch.load(filepath, map_location="cpu")
+        first_key = next((key for key in state_dict if key.endswith("0.weight")), None)
+        if first_key is None:
+            continue
+
+        weights = state_dict[first_key].flatten().tolist()
+        rows.append({
+            "game": game_name,
+            "agent": agent_name,
+            "entries": len(weights),
+            "value_min": min(weights),
+            "value_max": max(weights),
+            "value_mean": sum(weights) / len(weights),
+            "value_std": pd.Series(weights).std(ddof=0),
+            "layer": first_key,
+            "shape": str(tuple(state_dict[first_key].shape)),
+        })
+
+    if rows:
+        save_table(pd.DataFrame(rows), "rl_model_summary.csv")
+
+    if q_rows:
+        save_table(pd.DataFrame(q_rows), "rl_representative_q_values.csv")
+
+
 def run_analysis():
     ttt_df = normalize_matchup_df(load_csv("results/tictactoe_results.csv"))
     c4_df = normalize_matchup_df(load_csv("results/connect4_results.csv"))
@@ -535,6 +605,7 @@ def run_analysis():
     plot_c4_search_cost(c4_df)
     plot_c4_runtime_vs_nodes(c4_df)
     benchmark_tables_and_plot()
+    save_rl_model_summaries()
 
     plot_rl_training(
         "results/training/tictactoe_q_learning.csv",
