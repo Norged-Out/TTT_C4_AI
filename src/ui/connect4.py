@@ -22,6 +22,7 @@ DROP_SPEED = 900
 
 
 def reset_game(state):
+    # reset match state
     state["game"] = Connect4()
     state["winner_text"] = ""
     state["status"] = "Game reset."
@@ -35,6 +36,7 @@ def reset_game(state):
 
 
 def handle_game_end(state):
+    # build end text
     winner = state["game"].winner
 
     if winner == "Draw":
@@ -46,6 +48,7 @@ def handle_game_end(state):
 
 
 def get_board_layout(board_rect):
+    # fit board inside area
     cell_size = min(board_rect.width // Connect4.COLS, board_rect.height // (Connect4.ROWS + 1))
     total_w = cell_size * Connect4.COLS
     total_h = cell_size * (Connect4.ROWS + 1)
@@ -55,6 +58,7 @@ def get_board_layout(board_rect):
 
 
 def get_hover_column(mouse_pos, board_rect):
+    # turn mouse position into column
     x0, y0, cell_size = get_board_layout(board_rect)
     mx, my = mouse_pos
 
@@ -65,6 +69,7 @@ def get_hover_column(mouse_pos, board_rect):
 
 
 def get_current_mode(state):
+    # active side for current turn
     if state["game"].current_player == "X":
         return state["player1_mode"]
 
@@ -72,6 +77,7 @@ def get_current_mode(state):
 
 
 def get_ai_move(state, mode):
+    # choose move from selected agent
     if mode == "Human":
         raise ValueError("Human mode does not choose moves.")
 
@@ -102,11 +108,13 @@ def ensure_agent_ready_for_mode(state, mode, render_callback, pygame):
     if mode == "Q-learning" and state["q_table"] is None:
         from src.agents.connect4.q_learning import train_q_learning
 
+        # load q table once
         state["status"] = "Loading Q-learning..."
         state["train_progress"] = None
         render_callback()
 
         def progress(done, total):
+            # training progress
             state["train_progress"] = int((done / total) * 100)
             state["status"] = f"Loading Q-learning... {state['train_progress']}%"
             pygame.event.pump()
@@ -121,11 +129,13 @@ def ensure_agent_ready_for_mode(state, mode, render_callback, pygame):
     if mode == "DQN" and state["dqn_model"] is None:
         from src.agents.connect4.dqn import train_dqn
 
+        # load dqn once
         state["status"] = "Loading DQN..."
         state["train_progress"] = None
         render_callback()
 
         def progress(done, total):
+            # training progress
             state["train_progress"] = int((done / total) * 100)
             state["status"] = f"Loading DQN... {state['train_progress']}%"
             pygame.event.pump()
@@ -138,6 +148,7 @@ def ensure_agent_ready_for_mode(state, mode, render_callback, pygame):
 
 
 def draw_board(screen, pygame, board_rect, game, hover_col, show_hover):
+    # board colors
     bg = (245, 245, 245)
     board_blue = (40, 90, 185)
     hole = (230, 235, 245)
@@ -145,25 +156,30 @@ def draw_board(screen, pygame, board_rect, game, hover_col, show_hover):
     o_color = (240, 210, 70)
     grid = (30, 30, 30)
 
+    # board background
     pygame.draw.rect(screen, bg, board_rect)
 
     x0, y0, cell_size = get_board_layout(board_rect)
     total_w = cell_size * Connect4.COLS
 
+    # top hover row
     top_rect = pygame.Rect(x0, y0, total_w, cell_size)
     pygame.draw.rect(screen, (235, 235, 235), top_rect)
     pygame.draw.rect(screen, grid, top_rect, 3)
 
+    # hover token
     if show_hover and hover_col is not None and hover_col in game.available_moves():
         cx = x0 + hover_col * cell_size + cell_size // 2
         cy = y0 + cell_size // 2
         color = x_color if game.current_player == "X" else o_color
         pygame.draw.circle(screen, color, (cx, cy), int(cell_size * 0.34))
 
+    # blue board
     board_surface = pygame.Rect(x0, y0 + cell_size, total_w, cell_size * Connect4.ROWS)
     pygame.draw.rect(screen, board_blue, board_surface, border_radius=12)
     pygame.draw.rect(screen, grid, board_surface, 4, border_radius=12)
 
+    # slots
     for row in range(Connect4.ROWS):
         for col in range(Connect4.COLS):
             cx = x0 + col * cell_size + cell_size // 2
@@ -183,6 +199,7 @@ def draw_board(screen, pygame, board_rect, game, hover_col, show_hover):
 
 
 def draw_drop_token(screen, pygame, board_rect, drop_token):
+    # falling token
     if drop_token is None:
         return
 
@@ -198,6 +215,7 @@ def draw_drop_token(screen, pygame, board_rect, drop_token):
 
 
 def start_drop_animation(state, col):
+    # set up falling piece
     row = state["game"].get_drop_row(col)
     if row is None:
         state["status"] = "That column is full."
@@ -218,6 +236,7 @@ def start_drop_animation(state, col):
 
 
 def finish_drop_animation(state):
+    # commit move after drop finishes
     if state["pending_move"] is None:
         return
 
@@ -236,6 +255,7 @@ def finish_drop_animation(state):
 
 
 def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
+    # closed box
     pygame.draw.rect(screen, (70, 70, 70), rect, border_radius=8)
     pygame.draw.rect(screen, (110, 110, 110), rect, 2, border_radius=8)
 
@@ -249,6 +269,7 @@ def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
     if not expanded:
         return
 
+    # options list
     option_y = rect.bottom + 6
     for option in options:
         option_rect = pygame.Rect(rect.left, option_y, rect.width, rect.height)
@@ -260,19 +281,24 @@ def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
 
 
 def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
+    # sidebar background
     pygame.draw.rect(screen, (35, 35, 35), sidebar_rect)
 
+    # title
     title = fonts["title"].render("Connect 4", True, (245, 245, 245))
     screen.blit(title, (sidebar_rect.left + 20, 24))
 
+    # player labels
     p1_text = fonts["small"].render("Player 1", True, (220, 220, 220))
     p2_text = fonts["small"].render("Player 2", True, (220, 220, 220))
     screen.blit(p1_text, (sidebar_rect.left + 20, 96))
     screen.blit(p2_text, (sidebar_rect.left + 20, 220))
 
+    # closed dropdowns
     draw_dropdown(screen, pygame, ui_rects["player1_dropdown"], state["player1_mode"], MODES, False, fonts)
     draw_dropdown(screen, pygame, ui_rects["player2_dropdown"], state["player2_mode"], MODES, False, fonts)
 
+    # buttons
     for key in ["Start", "Reset"]:
         rect = ui_rects[key]
         color = (70, 120, 210) if key == "Start" else (90, 90, 90)
@@ -281,6 +307,7 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
         label_rect = label.get_rect(center=rect.center)
         screen.blit(label, label_rect)
 
+    # status text
     y = 500
     if state["game_started"]:
         if state["game"].winner is None:
@@ -297,6 +324,7 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
     screen.blit(status_text, (sidebar_rect.left + 20, y))
     y += 28
 
+    # load progress
     if state["train_progress"] is not None:
         progress_text = fonts["small"].render(
             f"Loading agent: {state['train_progress']}%",
@@ -306,12 +334,14 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
         screen.blit(progress_text, (sidebar_rect.left + 20, y))
         y += 28
 
+    # help text
     hint1 = fonts["small"].render("Click top row to drop a token.", True, (190, 190, 190))
     hint2 = fonts["small"].render("Press R to reset.", True, (190, 190, 190))
     screen.blit(hint1, (sidebar_rect.left + 20, y))
     y += 28
     screen.blit(hint2, (sidebar_rect.left + 20, y))
 
+    # expanded list on top
     if state["expanded_dropdown"] == "player1":
         draw_dropdown(screen, pygame, ui_rects["player1_dropdown"], state["player1_mode"], MODES, True, fonts)
     elif state["expanded_dropdown"] == "player2":
@@ -319,6 +349,7 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
 
 
 def option_rects_from_dropdown(dropdown_rect):
+    # clickable option boxes
     rects = []
     option_y = dropdown_rect.bottom + 6
     rect_type = type(dropdown_rect)
@@ -333,6 +364,7 @@ def run_game():
 
     pygame.init()
 
+    # app state
     state = {
         "player1_mode": "Human",
         "player2_mode": "Human",
@@ -350,6 +382,7 @@ def run_game():
         "dqn_model": None,
     }
 
+    # window setup
     screen_w = 1100
     screen_h = 780
     sidebar_w = 280
@@ -357,16 +390,19 @@ def run_game():
     screen = pygame.display.set_mode((screen_w, screen_h))
     pygame.display.set_caption("Connect 4")
 
+    # fonts
     fonts = {
         "title": pygame.font.SysFont("arial", 28, bold=True),
         "body": pygame.font.SysFont("arial", 22),
         "small": pygame.font.SysFont("arial", 18),
     }
 
+    # layout
     sidebar_rect = pygame.Rect(0, 0, sidebar_w, screen_h)
     board_rect = pygame.Rect(sidebar_w, 0, screen_w - sidebar_w, screen_h)
     state["board_rect"] = board_rect
 
+    # ui boxes
     ui_rects = {
         "player1_dropdown": pygame.Rect(20, 124, sidebar_w - 40, 38),
         "player2_dropdown": pygame.Rect(20, 248, sidebar_w - 40, 38),
@@ -378,6 +414,7 @@ def run_game():
     running = True
 
     def render_frame():
+        # draw one frame
         screen.fill((20, 20, 20))
         draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects)
         show_hover = (
@@ -398,23 +435,28 @@ def run_game():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
+                # keyboard shortcuts
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
                     reset_game(state)
 
             elif event.type == pygame.MOUSEMOTION:
+                # hover column
                 if state["drop_token"] is None:
                     state["hover_col"] = get_hover_column(event.pos, board_rect)
                 else:
                     state["hover_col"] = None
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # mouse click
                 mouse_pos = event.pos
 
+                # block clicks during drop
                 if state["drop_token"] is not None:
                     continue
 
+                # dropdown choices
                 handled_option = False
                 for player_key in ["player1", "player2"]:
                     if state["expanded_dropdown"] != player_key:
@@ -436,6 +478,7 @@ def run_game():
                 if handled_option:
                     continue
 
+                # start button
                 if ui_rects["Start"].collidepoint(mouse_pos):
                     reset_game(state)
                     ensure_agent_ready_for_mode(state, state["player1_mode"], render_frame, pygame)
@@ -445,26 +488,33 @@ def run_game():
                     state["last_ai_move_time"] = now
                     continue
 
+                # reset button
                 if ui_rects["Reset"].collidepoint(mouse_pos):
                     reset_game(state)
                     continue
 
+                # player 1 menu
                 if ui_rects["player1_dropdown"].collidepoint(mouse_pos):
                     state["expanded_dropdown"] = None if state["expanded_dropdown"] == "player1" else "player1"
                     continue
 
+                # player 2 menu
                 if ui_rects["player2_dropdown"].collidepoint(mouse_pos):
                     state["expanded_dropdown"] = None if state["expanded_dropdown"] == "player2" else "player2"
                     continue
 
+                # close open menu
                 state["expanded_dropdown"] = None
 
+                # only allow human clicks during live game
                 if not state["game_started"] or state["game"].winner is not None:
                     continue
 
+                # top-row click
                 if get_current_mode(state) != "Human":
                     continue
 
+                # start drop
                 col = get_hover_column(mouse_pos, board_rect)
                 if col is None:
                     continue
@@ -474,6 +524,7 @@ def run_game():
                 state["last_ai_move_time"] = now
 
         if state["drop_token"] is not None:
+            # animate falling piece
             state["drop_token"]["y"] += DROP_SPEED * clock.get_time() / 1000.0
             if state["drop_token"]["y"] >= state["drop_token"]["target_y"]:
                 finish_drop_animation(state)
@@ -493,6 +544,7 @@ def run_game():
             clock.tick(60)
             continue
 
+        # ai move
         move, stats = get_ai_move(state, current_mode)
         if start_drop_animation(state, move):
             if stats is not None:

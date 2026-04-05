@@ -21,6 +21,7 @@ AI_DELAY_SECONDS = 0.4
 
 
 def get_ai_move(game, mode, state):
+    # choose move from selected agent
     if mode == "Human":
         raise ValueError("Human mode does not choose moves.")
 
@@ -48,6 +49,7 @@ def get_ai_move(game, mode, state):
 
 
 def reset_game(state):
+    # reset match state
     state["game"] = TicTacToe()
     state["winner_text"] = ""
     state["status"] = "Game reset."
@@ -57,6 +59,7 @@ def reset_game(state):
 
 
 def handle_game_end(state):
+    # build end text
     winner = state["game"].winner
 
     if winner == "Draw":
@@ -68,6 +71,7 @@ def handle_game_end(state):
 
 
 def get_board_layout(board_rect):
+    # fit board inside area
     cell_size = min(board_rect.width, board_rect.height) // 3
     total_size = cell_size * 3
     x0 = board_rect.left + (board_rect.width - total_size) // 2
@@ -76,6 +80,7 @@ def get_board_layout(board_rect):
 
 
 def get_clicked_cell(mouse_pos, board_rect):
+    # turn click into cell index
     x0, y0, cell_size = get_board_layout(board_rect)
     mx, my = mouse_pos
 
@@ -88,6 +93,7 @@ def get_clicked_cell(mouse_pos, board_rect):
 
 
 def get_current_mode(state):
+    # active side for current turn
     if state["game"].current_player == "X":
         return state["player1_mode"]
 
@@ -95,18 +101,22 @@ def get_current_mode(state):
 
 
 def draw_board(screen, pygame, board_rect, game, fonts):
+    # board colors
     bg = (245, 245, 245)
     grid = (30, 30, 30)
     x_color = (30, 80, 180)
     o_color = (200, 80, 40)
 
+    # board background
     pygame.draw.rect(screen, bg, board_rect)
 
     x0, y0, cell_size = get_board_layout(board_rect)
     total_size = cell_size * 3
 
+    # outer border
     pygame.draw.rect(screen, grid, (x0, y0, total_size, total_size), 4)
 
+    # grid lines
     for i in range(1, 3):
         pygame.draw.line(
             screen,
@@ -123,6 +133,7 @@ def draw_board(screen, pygame, board_rect, game, fonts):
             4,
         )
 
+    # marks
     for index, value in enumerate(game.board):
         row = index // 3
         col = index % 3
@@ -142,6 +153,7 @@ def draw_board(screen, pygame, board_rect, game, fonts):
 
 
 def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
+    # closed box
     pygame.draw.rect(screen, (70, 70, 70), rect, border_radius=8)
     pygame.draw.rect(screen, (110, 110, 110), rect, 2, border_radius=8)
 
@@ -155,6 +167,7 @@ def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
     if not expanded:
         return
 
+    # options list
     option_y = rect.bottom + 6
     for option in options:
         option_rect = pygame.Rect(rect.left, option_y, rect.width, rect.height)
@@ -166,17 +179,20 @@ def draw_dropdown(screen, pygame, rect, value, options, expanded, fonts):
 
 
 def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
+    # sidebar background
     pygame.draw.rect(screen, (35, 35, 35), sidebar_rect)
 
+    # title
     title = fonts["title"].render("Tic Tac Toe", True, (245, 245, 245))
     screen.blit(title, (sidebar_rect.left + 20, 24))
 
+    # player labels
     p1_text = fonts["small"].render("Player 1", True, (220, 220, 220))
     p2_text = fonts["small"].render("Player 2", True, (220, 220, 220))
     screen.blit(p1_text, (sidebar_rect.left + 20, 96))
     screen.blit(p2_text, (sidebar_rect.left + 20, 220))
 
-    # draw closed dropdown boxes first
+    # closed dropdowns
     draw_dropdown(
         screen,
         pygame,
@@ -196,6 +212,7 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
         fonts,
     )
 
+    # buttons
     for key in ["Start", "Reset"]:
         rect = ui_rects[key]
         color = (70, 120, 210) if key == "Start" else (90, 90, 90)
@@ -204,6 +221,7 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
         label_rect = label.get_rect(center=rect.center)
         screen.blit(label, label_rect)
 
+    # status text
     y = 420
     if state["game_started"]:
         if state["game"].winner is None:
@@ -220,6 +238,7 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
     screen.blit(status_text, (sidebar_rect.left + 20, y))
     y += 28
 
+    # load progress
     if state["train_progress"] is not None:
         progress_text = fonts["small"].render(
             f"Loading agent: {state['train_progress']}%",
@@ -229,10 +248,11 @@ def draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects):
         screen.blit(progress_text, (sidebar_rect.left + 20, y))
         y += 28
 
+    # reset hint
     hint = fonts["small"].render("Press R to reset.", True, (190, 190, 190))
     screen.blit(hint, (sidebar_rect.left + 20, y))
 
-    # draw expanded dropdown last so it stays on top
+    # expanded list on top
     if state["expanded_dropdown"] == "player1":
         draw_dropdown(
             screen,
@@ -259,11 +279,13 @@ def ensure_agent_ready_for_mode(state, mode, render_callback, pygame):
     if mode == "Q-learning" and state["q_table"] is None:
         from src.agents.tictactoe.q_learning import train_q_learning
 
+        # load q table once
         state["status"] = "Loading Q-learning..."
         state["train_progress"] = None
         render_callback()
 
         def progress(done, total):
+            # training progress
             state["train_progress"] = int((done / total) * 100)
             state["status"] = f"Loading Q-learning... {state['train_progress']}%"
             pygame.event.pump()
@@ -278,11 +300,13 @@ def ensure_agent_ready_for_mode(state, mode, render_callback, pygame):
     if mode == "DQN" and state["dqn_model"] is None:
         from src.agents.tictactoe.dqn import train_dqn
 
+        # load dqn once
         state["status"] = "Loading DQN..."
         state["train_progress"] = None
         render_callback()
 
         def progress(done, total):
+            # training progress
             state["train_progress"] = int((done / total) * 100)
             state["status"] = f"Loading DQN... {state['train_progress']}%"
             pygame.event.pump()
@@ -295,6 +319,7 @@ def ensure_agent_ready_for_mode(state, mode, render_callback, pygame):
 
 
 def option_rects_from_dropdown(dropdown_rect):
+    # clickable option boxes
     rects = []
     option_y = dropdown_rect.bottom + 6
     rect_type = type(dropdown_rect)
@@ -309,6 +334,7 @@ def run_game():
 
     pygame.init()
 
+    # app state
     state = {
         "player1_mode": "Human",
         "player2_mode": "Human",
@@ -323,6 +349,7 @@ def run_game():
         "dqn_model": None,
     }
 
+    # window setup
     screen_w = 1000
     screen_h = 700
     sidebar_w = 280
@@ -330,15 +357,18 @@ def run_game():
     screen = pygame.display.set_mode((screen_w, screen_h))
     pygame.display.set_caption("Tic Tac Toe")
 
+    # fonts
     fonts = {
         "title": pygame.font.SysFont("arial", 28, bold=True),
         "body": pygame.font.SysFont("arial", 22),
         "small": pygame.font.SysFont("arial", 18),
     }
 
+    # layout
     sidebar_rect = pygame.Rect(0, 0, sidebar_w, screen_h)
     board_rect = pygame.Rect(sidebar_w, 0, screen_w - sidebar_w, screen_h)
 
+    # ui boxes
     ui_rects = {
         "player1_dropdown": pygame.Rect(20, 124, sidebar_w - 40, 38),
         "player2_dropdown": pygame.Rect(20, 248, sidebar_w - 40, 38),
@@ -350,6 +380,7 @@ def run_game():
     running = True
 
     def render_frame():
+        # draw one frame
         screen.fill((20, 20, 20))
         draw_sidebar(screen, pygame, sidebar_rect, state, fonts, ui_rects)
         draw_board(screen, pygame, board_rect, state["game"], fonts)
@@ -363,14 +394,17 @@ def run_game():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
+                # keyboard shortcuts
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
                     reset_game(state)
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # mouse click
                 mouse_pos = event.pos
 
+                # dropdown choices
                 handled_option = False
                 for player_key in ["player1", "player2"]:
                     if state["expanded_dropdown"] != player_key:
@@ -392,6 +426,7 @@ def run_game():
                 if handled_option:
                     continue
 
+                # start button
                 if ui_rects["Start"].collidepoint(mouse_pos):
                     reset_game(state)
                     ensure_agent_ready_for_mode(state, state["player1_mode"], render_frame, pygame)
@@ -402,31 +437,38 @@ def run_game():
                     state["last_ai_move_time"] = now
                     continue
 
+                # reset button
                 if ui_rects["Reset"].collidepoint(mouse_pos):
                     reset_game(state)
                     state["expanded_dropdown"] = None
                     continue
 
+                # player 1 menu
                 if ui_rects["player1_dropdown"].collidepoint(mouse_pos):
                     state["expanded_dropdown"] = None if state["expanded_dropdown"] == "player1" else "player1"
                     continue
 
+                # player 2 menu
                 if ui_rects["player2_dropdown"].collidepoint(mouse_pos):
                     state["expanded_dropdown"] = None if state["expanded_dropdown"] == "player2" else "player2"
                     continue
 
+                # close open menu
                 state["expanded_dropdown"] = None
 
+                # only allow human clicks during live game
                 if not state["game_started"] or state["game"].winner is not None:
                     continue
 
                 if get_current_mode(state) != "Human":
                     continue
 
+                # board click
                 cell = get_clicked_cell(mouse_pos, board_rect)
                 if cell is None:
                     continue
 
+                # play move
                 if not state["game"].make_move(cell):
                     continue
 
@@ -446,11 +488,13 @@ def run_game():
             clock.tick(60)
             continue
 
+        # ai delay
         if now - state["last_ai_move_time"] < AI_DELAY_SECONDS:
             render_frame()
             clock.tick(60)
             continue
 
+        # ai move
         ensure_agent_ready_for_mode(state, current_mode, render_frame, pygame)
         move = get_ai_move(state["game"], current_mode, state)
         state["game"].make_move(move)

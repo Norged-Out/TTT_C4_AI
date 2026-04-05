@@ -1,6 +1,6 @@
 """
 Author: Priyansh Nayak
-Description: Entry point for Tic Tac Toe and Connect 4 project
+Description: Entry point for the project
 """
 
 import csv
@@ -30,32 +30,24 @@ def write_results(filename, results):
 
 
 def run_tictactoe_experiment_mode():
-    # Tic Tac Toe uses the lighter experiment set
     from src.experiments.tictactoe_runner import run_experiments
-
-    # run the experiment block
     results = run_experiments(num_games=50)
-
     write_results("tictactoe_results.csv", results)
     print("Done.")
 
 
 def run_connect4_experiment_mode():
-    # Connect 4 uses the larger run count
     from src.experiments.connect4_runner import run_experiments
-
-    # run the experiment block
     results = run_experiments(num_games=100)
     write_results("connect4_results.csv", results)
     print("Done.")
 
 
 def generate_tictactoe_models():
-    # generate both saved RL agents together
     from src.agents.tictactoe.q_learning import Q_TABLE_PATH, train_q_learning
     from src.agents.tictactoe.dqn import DQN_MODEL_PATH, train_dqn
-
     print("Generating Tic Tac Toe saved models")
+
     print("Training Q-learning for 20000 episodes")
     train_q_learning(episodes=20000, force_retrain=True)
     print(f"Saved Q-learning table to {Q_TABLE_PATH}")
@@ -68,11 +60,10 @@ def generate_tictactoe_models():
 
 
 def generate_connect4_models():
-    # generate both saved RL agents together
     from src.agents.connect4.q_learning import Q_TABLE_PATH, train_q_learning
     from src.agents.connect4.dqn import DQN_MODEL_PATH, train_dqn
-
     print("Generating Connect 4 saved models")
+
     print("Training Q-learning for 50000 episodes")
     train_q_learning(episodes=50000, force_retrain=True)
     print(f"Saved Q-learning table to {Q_TABLE_PATH}")
@@ -80,30 +71,27 @@ def generate_connect4_models():
     print("Training DQN for 50000 episodes")
     train_dqn(episodes=50000, force_retrain=True)
     print(f"Saved DQN model to {DQN_MODEL_PATH}")
+
     print("Done.")
 
 
 def run_tictactoe_pygame_mode():
-    # open the Tic Tac Toe window
     from src.ui.tictactoe import run_game
     run_game()
 
 
 def run_connect4_pygame_mode():
-    # open the Connect 4 window
     from src.ui.connect4 import run_game
     run_game()
 
 
 def run_analysis_mode():
-    # build figures and summary tables from saved results
     from src.experiments.analysis import run_analysis
     run_analysis()
 
 
 
 def main():
-    # simple menu entry point
     print("Menu:")
     print("1 - Run Tic Tac Toe Pygame")
     print("2 - Run Connect 4 Pygame")
@@ -112,8 +100,6 @@ def main():
     print("5 - Generate Tic Tac Toe RL Models")
     print("6 - Generate Connect 4 RL Models")
     print("7 - Build Figures")
-
-    # one simple input is enough here
     choice = input("Enter choice: ").strip()
 
     if choice == "1":
