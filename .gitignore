@@ -195,6 +195,7 @@ desktop.ini
 *.csv
 *.png
 *.tex
+!references.bib
 models/
 
 # Ruff stuff:
