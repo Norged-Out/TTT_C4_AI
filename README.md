@@ -256,7 +256,7 @@ move = choose_alphabeta_move(game)
 
 ```python
 from src.agents.tictactoe.q_learning import train_q_learning, choose_q_move
-q_table = train_q_learning()
+q_table = train_q_learning(episodes=50000)
 move = choose_q_move(game, q_table)
 ```
 
@@ -264,7 +264,7 @@ move = choose_q_move(game, q_table)
 
 ```python
 from src.agents.tictactoe.dqn import train_dqn, choose_dqn_move
-model = train_dqn()
+model = train_dqn(episodes=50000)
 move = choose_dqn_move(game, model)
 ```
 
@@ -286,7 +286,7 @@ move, stats = choose_alphabeta_move_limited(game, depth_limit=5)
 
 ```python
 from src.agents.connect4.q_learning import train_q_learning, choose_q_move
-q_table = train_q_learning()
+q_table = train_q_learning(episodes=50000)
 move = choose_q_move(game, q_table)
 ```
 
@@ -294,7 +294,7 @@ move = choose_q_move(game, q_table)
 
 ```python
 from src.agents.connect4.dqn import train_dqn, choose_dqn_move
-model = train_dqn()
+model = train_dqn(episodes=50000)
 move = choose_dqn_move(game, model)
 ```
 

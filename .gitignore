@@ -197,6 +197,8 @@ desktop.ini
 *.tex
 !references.bib
 models/
+README.txt
+lecture_notes/
 
 # Ruff stuff:
 .ruff_cache/
